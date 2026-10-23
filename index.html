@@ -62,7 +62,8 @@ body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15p
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:8px 14px}
 button:hover{border-color:var(--ink-3)}
-button:disabled{opacity:.45;cursor:default}
+button:disabled,input:disabled,select:disabled{opacity:.45;cursor:default}
+label.row:has(input:disabled)>.h{opacity:.45}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 button.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:700}
 button.danger{background:transparent;border-color:var(--danger);color:var(--danger)}
@@ -591,7 +592,7 @@ body.classmode #vbPill{font-size:clamp(12px,1.4vmin,16px);opacity:.65}
             <div class="btnrow"><button class="sm" id="tPrevP">上一位（B）</button><button class="sm" id="tNextP">下一位（N）</button></div>
           </div>
           <div id="tAgendaCtl">
-            <div class="hint">每行一段：段落名稱 分鐘（例：小組討論 15）</div>
+            <div class="hint">每行一段：段落名稱 分鐘。行尾加 ♪ 這段才配樂（例：小組討論 15 ♪）</div>
             <textarea id="tAgenda" style="min-height:120px"></textarea>
             <label class="row"><span class="h">段落結束自動接續下一段</span><input type="checkbox" id="tAuto"></label>
             <label class="row"><span class="h">剩餘幾秒時提醒</span><input type="number" id="tWarn2" min="0" max="600"></label>
@@ -604,7 +605,8 @@ body.classmode #vbPill{font-size:clamp(12px,1.4vmin,16px);opacity:.65}
           </div>
           <div class="btnrow"><button class="primary" id="tGo">開始／暫停</button><button class="sm" id="tReset">重設</button></div>
           <label class="row" id="tMusicRow"><span class="h">開始計時時自動播「思考」配樂</span><input type="checkbox" id="tMusic"></label>
-          <div class="hint">空白鍵：開始／暫停（雙計時為換方）· Enter：雙計時暫停 · ↑↓：±30 秒 · R：重設。最後 10 秒逐秒提示，時間到會敲鑼並轉為超時計時，配樂在歸零時淡出。</div>
+          <label class="row" id="tSprintRow"><span class="h">最後幾分鐘換「衝刺」配樂（0 = 不換）</span><input type="number" id="tSprint" min="0" max="30" style="width:64px"></label>
+          <div class="hint">空白鍵：開始／暫停（雙計時為換方）· Enter：雙計時暫停 · ↑↓：±30 秒 · R：重設。最後 10 秒逐秒提示，時間到會敲鑼並轉為超時計時。開了自動配樂時，思考／衝刺配樂在歸零時收掉；你自己選的其他配樂不受影響。時間軸裡行尾加 ♪ 的段落才配樂；報告序列與辯論不配樂。計時不到 2N+1 分鐘（N=2 時 5 分鐘）不換衝刺。</div>
         </div>
         <!-- vibe -->
         <div class="ctl" data-mod="vibe">
@@ -613,7 +615,7 @@ body.classmode #vbPill{font-size:clamp(12px,1.4vmin,16px);opacity:.65}
           <label class="row"><span class="h">小字</span><input type="text" id="vbSubIn" style="width:170px"></label>
           <label class="row"><span class="h">倒數（分）</span><input type="number" id="vbCdMin" min="0" max="180" style="width:64px"></label>
           <div class="btnrow"><button class="sm" id="vbCdGo">開始倒數（Enter）</button><button class="sm ghost" id="vbCdReset">重設倒數（R）</button></div>
-          <div class="hint">倒數歸零時音樂淡出並響一聲。0 = 不顯示倒數。</div>
+          <div class="hint">倒數歸零時響一聲；自動播的音樂淡出，你自己選的照播。0 = 不顯示倒數。</div>
           <div id="vbMusicCtl">
             <h3>配樂</h3>
             <label class="row"><span class="h">情緒</span><select id="vbMood"></select></label>
@@ -1686,9 +1688,14 @@ const EN={
 /* modules */
 '點名':'Wheel','分組':'Groups','抽籤':'Draw','抽卡':'Slots','計時':'Timer','氛圍':'Vibe',
 /* vibe */
-'暖場':'Warm-up','提振':'Boost','思考':'Focus','終場':'Finale','夜空':'Night Sky','日光':'Daylight','配樂':'Music','曲目':'Tracks',
+'暖場':'Warm-up','提振':'Boost','思考':'Focus','終場':'Finale','夜空':'Night Sky','日光':'Daylight','歌曲':'Songs','衝刺':'Sprint','配樂':'Music','曲目':'Tracks',
+'最後幾分鐘換「衝刺」配樂（0 = 不換）':'“Sprint” music for the last N min (0 = off)','載入中…':'Loading…','報告序列開著，不配樂（計時面板可關）':'Presenter queue is on — no music (turn it off in the timer panel)','暫停倒數':'Pause countdown',
+'每行一段：段落名稱 分鐘。行尾加 ♪ 這段才配樂（例：小組討論 15 ♪）':'One segment per line: name minutes. End a line with ♪ to give it music (e.g. Group discussion 15 ♪)',
+'倒數歸零時響一聲；自動播的音樂淡出，你自己選的照播。0 = 不顯示倒數。':'A chime at zero; auto-played music fades out, music you picked keeps playing. 0 = no countdown.','最後 {} 分鐘':'Last {} minutes','配樂照舊：{}':'Keeping the music: {}','載入失敗':'Could not load','這個情緒的曲子都載不到':'None of this mood’s tracks could be loaded',
+'歌曲與衝刺不在對照表裡，要用時在上方情緒選單自己選。':'Songs and Sprint are not in this table; pick them from the mood menu above.',
+'空白鍵：開始／暫停（雙計時為換方）· Enter：雙計時暫停 · ↑↓：±30 秒 · R：重設。最後 10 秒逐秒提示，時間到會敲鑼並轉為超時計時。開了自動配樂時，思考／衝刺配樂在歸零時收掉；你自己選的其他配樂不受影響。時間軸裡行尾加 ♪ 的段落才配樂；報告序列與辯論不配樂。計時不到 2N+1 分鐘（N=2 時 5 分鐘）不換衝刺。':'Space: start / pause (dual: switch side) · Enter: pause dual · ↑↓: ±30 s · R: reset. Per-second cues in the last 10 s; a gong at zero, then overtime counts up. With auto music on, Focus / Sprint music stops at zero; music you picked yourself is left alone. In the agenda only lines ending with ♪ get music; presenter queues and debates get none. Sprint needs a timer of at least 2N+1 minutes (5 min when N = 2).',
 '情緒':'Mood','播放／暫停':'Play / Pause','下一首（Shift+P）':'Next (Shift+P)','音樂音量':'Music volume','大廳畫面':'Lobby screen','大字':'Headline','小字':'Second line',
-'倒數（分）':'Countdown (min)','開始倒數（Enter）':'Start countdown (Enter)','重設倒數（R）':'Reset countdown (R)','倒數歸零時音樂淡出並響一聲。0 = 不顯示倒數。':'Music fades out and a chime plays at zero. 0 = no countdown.',
+'倒數（分）':'Countdown (min)','開始倒數（Enter）':'Start countdown (Enter)','重設倒數（R）':'Reset countdown (R)',
 '連動':'Automation','切進「氛圍」時自動播放':'Auto-play on entering Vibe','換主題時跟著換情緒':'Follow the theme’s default mood','主題 → 預設情緒':'Theme → default mood',
 '沒有音樂：這個檔案旁沒有 music 資料夾，也連不上線上版。大廳畫面照常可用。':'No music: no music/ folder next to this file and the online copy is unreachable. The lobby screen still works.',
 '倒數是 0，先在面板設定分鐘':'Countdown is 0 — set minutes in the panel first','音樂來自線上版，需要網路':'Music comes from the online copy and needs a connection','（沒有曲子）':'(no tracks)','播配樂':'Music on','倒數':'Countdown',
@@ -1696,7 +1703,7 @@ const EN={
 '開始計時時自動播「思考」配樂':'Play “Focus” music when the timer starts','配樂（P）':'Music (P)',
 '沒有音樂：這個檔案旁沒有 music 資料夾，也連不上線上版':'No music: no music/ folder next to this file, and the online copy is unreachable','載入音樂中…':'Loading music…',
 '這個情緒還沒有曲子':'No tracks in this mood yet',
-'按 P 開始播放':'Press P to start playback','按空白鍵播放':'Press Space to play','播放中':'Playing','已暫停':'Paused','倒數開始／暫停':'Countdown start / pause','重設倒數':'Reset countdown','下一首':'Next track','暫停配樂':'Pause music',
+'按 P 開始播放':'Press P to start playback','重設倒數':'Reset countdown','下一首':'Next track','暫停配樂':'Pause music',
 '時間到':'Time’s up','按 Enter 開始倒數':'Press Enter to start','暫停中 · Enter 繼續':'Paused · Enter to resume','歡迎':'Welcome',
 '靜音切換（音效與音樂）':'Mute toggle (sound effects and music)','各工具的主要動作：旋轉、分組、抽籤、拉霸、計時開始／換方、氛圍播放／暫停。簡報遙控器的「下一頁」也可觸發':'Main action of each tool: spin, group, draw, pull, start / switch timer, Vibe play / pause. A presenter remote’s “next” also triggers it',
 '計時：±30 秒、重設；抽卡：R 重來（每組一張清空各組；逐輪拉清掉抽到一半的結果）；氛圍：R 重設倒數':'Timer: ±30 s, reset; Slots: R restarts (one-per-group clears all groups; reel-by-reel clears a half-finished pull); Vibe: R resets the countdown',
@@ -1754,8 +1761,7 @@ const EN={
 '分組方式':'Group by','指定組數':'Number of groups','組名':'Group names','第 1 組、第 2 組':'Group 1, Group 2','A 組、B 組':'Group A, Group B','隨主題命名':'Themed names','依 #標籤 平衡各組':'Balance groups by #tag','盡量避開上次同組':'Avoid last time’s groupmates','上課模式也顯示 #標籤':'Show #tags in class mode','分組後自動選組長（聚光燈）':'Auto-pick leaders after grouping (spotlight)','揭曉節奏':'Reveal pace','劇場':'Theatrical','快速':'Fast','開始分組':'Make groups','快捷鍵 L':'Shortcut L','選擇組長':'Pick leaders','複製結果':'Copy result','清除':'Clear','編輯模式下可直接把成員拖到另一組微調。':'In edit mode, drag a member onto another group to fine-tune.','分組結果會同步給「點名（組別）」「抽籤」「抽卡」使用。':'Groups are shared with Pick (groups), Draw and Slots.',
 '模式':'Mode','對象':'Items','目前分組':'Current groups','自訂清單':'Custom list','自訂清單（每行一項）':'Custom list (one per line)','角色（每行一個，會平均分配給各組）':'Roles (one per line, spread evenly across groups)','開始抽籤':'Draw now',
 '抽法':'Mode','單次':'Once','每組一張':'One per group','卡組':'Deck','情境抽卡：創意、限制與機會（4 輪）':'Scenario Cards: Creativity, Constraints & Opportunities (4 reels)','商業模式圖九宮格':'Business Model Canvas blocks','SDGs 17 項目標':'SDGs (17 goals)','拉霸':'Spin','＋ 新增一輪':'+ Add reel','還原此卡組':'Reset deck','「每組一張」會依目前分組逐組抽出任務，R 鍵重來。每一輪一個欄位，最多 4 輪，內容可直接修改。抽完後點某一輪（或按 1–4）只重抽那一輪。刪掉的預設輪按「＋ 新增一輪」會放回原位；「還原此卡組」則把整組換回預設。':'“One per group” draws a task for each current group; R restarts. One box per reel, up to 4 reels, editable in place. After a spin, click a reel (or press 1–4) to re-spin just that reel. A deleted default reel comes back in place with “+ Add reel”; “Reset deck” restores the whole deck.','刪除「{}」這一輪？之後可用「＋ 新增一輪」找回預設的輪。':'Delete the “{}” reel? A default reel can be brought back with “+ Add reel”.','已找回「{}」':'Restored “{}”','全部還原預設':'Reset everything','全部還原預設會清掉這個瀏覽器裡的所有班級、分組、卡組與設定（建議先匯出 JSON）。確定？':'Resetting everything clears all classes, groups, decks and settings in this browser (export JSON first). Continue?',
-'單一計時':'Single','辯論雙計時':'Debate (dual)','課堂時間軸':'Class agenda','時間（分:秒）':'Time (min:sec)','剩餘幾秒時提醒':'Warning at (s left)','顯示報告順序（來自抽籤）':'Show presentation order (from Draw)','上一位（B）':'Previous (B)','下一位（N）':'Next (N)','每行一段：段落名稱 分鐘（例：小組討論 15）':'One segment per line: name minutes (e.g. Group discussion 15)','段落結束自動接續下一段':'Auto-continue to the next segment','上一段（B）':'Previous segment (B)','下一段（N）':'Next segment (N)','左方名稱':'Left side','右方名稱':'Right side','每方時間（秒）':'Time per side (s)','開始／暫停':'Start / Pause','重設':'Reset','空白鍵：開始／暫停（雙計時為換方）· Enter：雙計時暫停 · ↑↓：±30 秒 · R：重設。最後 10 秒逐秒提示，時間到會敲鑼並轉為超時計時。':'Space: start / pause (dual: switch side) · Enter: pause dual · ↑↓: ±30 s · R: reset. Ticks in the last 10 s; a gong at zero, then counts overtime.',
-'新增班級':'Add class','重新命名':'Rename','刪除班級':'Delete class','每行一個名字\n或直接從 Excel 複製整欄貼上（有標題列也可以）\n或貼 JSON：["王小明", "李小華"]\n可加標籤供分組平衡：王小明 #台灣':'One name per line\nor paste a whole column from Excel (header row is fine)\nor paste JSON: ["Alex Chen", "Mei Lin"]\nadd a tag for balanced grouping: Alex Chen #Taiwan','拖入 .csv / .xlsx / .txt / .json 到這裡，或':'Drop a .csv / .xlsx / .txt / .json here, or','選擇檔案':'choose a file','打亂順序':'Shuffle','排序':'Sort','去重':'De-duplicate','Excel 若有「國籍／班別／性別／系所」等欄位，會自動轉成 #標籤。':'A nationality / program / gender / department column in Excel becomes a #tag automatically.',
+'單一計時':'Single','辯論雙計時':'Debate (dual)','課堂時間軸':'Class agenda','時間（分:秒）':'Time (min:sec)','剩餘幾秒時提醒':'Warning at (s left)','顯示報告順序（來自抽籤）':'Show presentation order (from Draw)','上一位（B）':'Previous (B)','下一位（N）':'Next (N)','段落結束自動接續下一段':'Auto-continue to the next segment','上一段（B）':'Previous segment (B)','下一段（N）':'Next segment (N)','左方名稱':'Left side','右方名稱':'Right side','每方時間（秒）':'Time per side (s)','開始／暫停':'Start / Pause','重設':'Reset','新增班級':'Add class','重新命名':'Rename','刪除班級':'Delete class','每行一個名字\n或直接從 Excel 複製整欄貼上（有標題列也可以）\n或貼 JSON：["王小明", "李小華"]\n可加標籤供分組平衡：王小明 #台灣':'One name per line\nor paste a whole column from Excel (header row is fine)\nor paste JSON: ["Alex Chen", "Mei Lin"]\nadd a tag for balanced grouping: Alex Chen #Taiwan','拖入 .csv / .xlsx / .txt / .json 到這裡，或':'Drop a .csv / .xlsx / .txt / .json here, or','選擇檔案':'choose a file','打亂順序':'Shuffle','排序':'Sort','去重':'De-duplicate','Excel 若有「國籍／班別／性別／系所」等欄位，會自動轉成 #標籤。':'A nationality / program / gender / department column in Excel becomes a #tag automatically.',
 '劇場效果':'Stage effects','舞台光效（背景粒子、體積光）':'Stage lighting FX (particles & light)','開啟':'On','省電（老電腦）':'Low power (older laptops)','關閉':'Off','進入上課模式時拉開布幕':'Open curtain when entering class mode','懸念時燈光轉暗（聚光燈）':'Dim lights during suspense (spotlight)','揭曉特效':'Reveal effect','彩帶':'Confetti','星星噴發':'Star burst','金色雨':'Gold rain','無':'None','最後一人施放煙火':'Fireworks for the last pick','音效':'Sound','總開關（M）':'Master (M)','音量':'Volume','旋轉 tick 聲':'Spin ticks','揭曉掌聲':'Applause on reveal','試聽目前音效組':'Preview this sound pack','自訂音檔（取代內建）':'Custom sounds (replace built-in)','mp3 / wav / ogg，1.5MB 以下，存在瀏覽器中離線可用。':'mp3 / wav / ogg under 1.5 MB, stored in the browser for offline use.','資料':'Data','匯出 Excel 報表':'Export Excel report','匯出全部（JSON）':'Export all (JSON)','匯入（JSON）':'Import (JSON)','所有班級、分組、設定都存在這個瀏覽器。換電腦前先匯出。':'All classes, groups and settings live in this browser. Export before switching computers.',
 '引擎 spin-wheel 5.0.2（CrazyTim，MIT）· 特效 canvas-confetti（MIT）· 試算表解析 SheetJS（Apache-2.0）· 全部音效為本工具程序合成，無版權疑慮 · 隨機來源 crypto.getRandomValues()':'Wheel: spin-wheel 5.0.2 (CrazyTim, MIT) · effects: canvas-confetti (MIT) · motion: anime.js (MIT) · spreadsheets: SheetJS (Apache-2.0) · display font: GenSenRounded (SIL OFL 1.1) · all sounds synthesised in-tool · randomness: crypto.getRandomValues()',
 '移除，下一位':'Remove, next','快捷鍵':'Keyboard shortcuts','進入／離開上課模式（全螢幕，隱藏名單與紀錄）':'Enter / leave class mode (full screen, hides roster and logs)','切換上一個／下一個工具（上課模式下移動滑鼠也會叫出底部工具列）':'Previous / next tool (in class mode, moving the mouse also shows the dock)','靜音切換':'Toggle mute','切換下一個主題（上課模式中也可用，音效組會跟著換）':'Next theme (works in class mode; the sound pack follows)','分組：聚光燈選出各組組長（可在分組後任何時候執行）':'Groups: spotlight picks a leader per group (any time after grouping)','計時：換下一位／上一位報告者（需先在「抽籤」抽出報告順序）':'Timer: next / previous presenter (draw an order in Draw first)','空白鍵':'Space','點名卡片：移除／保留。動畫進行中按 Enter 可直接跳到結果':'Pick card: remove / keep. Press Enter during an animation to skip to the result','顯示本說明':'Show this help','知道了':'Got it',
@@ -1983,8 +1989,8 @@ const EV_DECKS_EN={
 const EV_DECKS_CUR=()=>LANG==='en'?EV_DECKS_EN:EV_DECKS;
 /* text defaults that live in saved state; swapped only when they still equal the other language's default */
 const LANG_DEFAULTS={
-  zh:{ 'vibe.text':'歡迎','timer.a':'正方','timer.b':'反方','timer.agenda':'開場 5\n講授 20\n小組討論 15\n分組報告 10\n總結 5','order.custom':'第 1 組\n第 2 組\n第 3 組\n第 4 組\n第 5 組\n第 6 組','order.roles':'加盟派\n直營派\n決策團隊','class':'我的班級' },
-  en:{ 'vibe.text':'Welcome','timer.a':'Pro','timer.b':'Con','timer.agenda':'Opening 5\nLecture 20\nGroup discussion 15\nPresentations 10\nWrap-up 5','order.custom':'Group 1\nGroup 2\nGroup 3\nGroup 4\nGroup 5\nGroup 6','order.roles':'Franchise camp\nCompany-owned camp\nDecision team','class':'My Class' }
+  zh:{ 'vibe.text':'歡迎','timer.a':'正方','timer.b':'反方','timer.agenda':'開場 5\n講授 20\n小組討論 15 ♪\n分組報告 10\n總結 5','order.custom':'第 1 組\n第 2 組\n第 3 組\n第 4 組\n第 5 組\n第 6 組','order.roles':'加盟派\n直營派\n決策團隊','class':'我的班級' },
+  en:{ 'vibe.text':'Welcome','timer.a':'Pro','timer.b':'Con','timer.agenda':'Opening 5\nLecture 20\nGroup discussion 15 ♪\nPresentations 10\nWrap-up 5','order.custom':'Group 1\nGroup 2\nGroup 3\nGroup 4\nGroup 5\nGroup 6','order.roles':'Franchise camp\nCompany-owned camp\nDecision team','class':'My Class' }
 };
 const GN_ALL=(l)=>{ const o={}; Object.entries(GROUP_NAMES_RAW).forEach(([k,arr])=>arr.forEach((zh,i)=>{ o[l==='en'?zh:EN[zh]]=l==='en'?(EN[zh]||zh):zh; })); return o; };
 function renameStored(st,from,to){ /* group names & draw labels generated by the app carry the language they were made in */
@@ -2019,7 +2025,7 @@ const DEF={ lang:'zh', tap:true, theme:'dark', pack:'auto', effect:'confetti', f
   ambience:'on', sound:true, volume:0.8, tick:true, drum:true, fanfare:true, applause:true, curtain:true, lights:true, custom:{} };
 const DEFMOD={ wheel:{source:'students'}, group:{by:'count',n:6,k:4,naming:'num',balance:true,avoid:true,speed:'drama',showTags:false,leader:false},
   order:{mode:'order',source:'groups',custom:'第 1 組\n第 2 組\n第 3 組\n第 4 組\n第 5 組\n第 6 組',roles:'加盟派\n直營派\n決策團隊',last:null},
-  reels:{preset:'creative',decks:null,incompat:null,hist:[],mode:'single',spin:'all',unit:'one',partial:null,assign:[],ev:{preset:'shock',decks:null,scope:'class',respMin:5,pause:false,active:null,log:[]}}, timer:{mode:'single',secs:180,warn:30,a:'正方',b:'反方',duelSecs:120,useQueue:true,qi:0,agenda:'開場 5\n講授 20\n小組討論 15\n分組報告 10\n總結 5',auto:true,ai:0,music:true},
+  reels:{preset:'creative',decks:null,incompat:null,hist:[],mode:'single',spin:'all',unit:'one',partial:null,assign:[],ev:{preset:'shock',decks:null,scope:'class',respMin:5,pause:false,active:null,log:[]}}, timer:{mode:'single',secs:180,warn:30,a:'正方',b:'反方',duelSecs:120,useQueue:true,qi:0,agenda:'開場 5\n講授 20\n小組討論 15 ♪\n分組報告 10\n總結 5',auto:true,ai:0,music:true,sprint:2},
   vibe:{mood:'',text:'',sub:'',cd:10,vol:0.6,auto:true,follow:true,map:{}} };
 let state=load();
 function load(){
@@ -2038,6 +2044,7 @@ function normalize(s){
     if(!Array.isArray(ev.log)) ev.log=[]; ev.log=ev.log.filter(l=>l&&Array.isArray(l.items)&&l.items.length); if(!EV_DECKS[ev.preset]) ev.preset='shock'; if(!['class','group'].includes(ev.scope)) ev.scope='class'; ev.respMin=clamp(parseInt(ev.respMin)||0,0,120); ev.pause=!!ev.pause;
     if(ev.active&&!(Array.isArray(ev.active.items)&&ev.active.items.length&&['class','group'].includes(ev.active.scope))) ev.active=null; }
   delete s.mod.vote; delete s.mod.invest; /* modules retired 2026-10 */
+  { const tm=s.mod.timer; if(tm.agenda==='開場 5\n講授 20\n小組討論 15\n分組報告 10\n總結 5') tm.agenda='開場 5\n講授 20\n小組討論 15 ♪\n分組報告 10\n總結 5'; if(tm.agenda==='Opening 5\nLecture 20\nGroup discussion 15\nPresentations 10\nWrap-up 5') tm.agenda='Opening 5\nLecture 20\nGroup discussion 15 ♪\nPresentations 10\nWrap-up 5'; tm.sprint=clamp(parseInt(tm.sprint)||0,0,30); if(isNaN(tm.sprint)) tm.sprint=2; }
   { const vb=s.mod.vibe; if(!vb.map||typeof vb.map!=='object') vb.map={}; vb.vol=clamp(parseFloat(vb.vol),0,1); if(isNaN(vb.vol)) vb.vol=0.6; vb.cd=clamp(parseInt(vb.cd)||0,0,180); if(typeof vb.text!=='string') vb.text=''; if(typeof vb.sub!=='string') vb.sub=''; if(typeof vb.mood!=='string') vb.mood=''; }
   s.ui=s.ui||{mod:'wheel'}; if(!DEFMOD[s.ui.mod]) s.ui.mod='wheel';
   if(!s.classes||!s.classes.length) s.classes=[{id:uid(),name:T('我的班級'),names:[]}];
@@ -2065,7 +2072,7 @@ function getBuf(k){ const {id,url}=srcOf(k); if(BUF[id]) return Promise.resolve(
   PENDING[id]=new Promise(res=>c.decodeAudioData(arr.buffer,b=>{BUF[id]=b;res(b);},()=>res(null))); return PENDING[id]; }
 function preload(){ ['tick','chime','roll','reveal'].concat(SND.real?['sting','pop','curtain','applause','gong']:[]).forEach(k=>getBuf(k)); }
 function dropBuf(k){ Object.keys(BUF).filter(x=>x.endsWith('.'+k)||x===k).forEach(x=>{delete BUF[x];delete PENDING[x];}); }
-async function play(k,{gain=1,delay=0,offset=0}={}){ if(!S().sound) return null; const c=ac(); const b=await getBuf(k); if(!b) return null; if(k!=='tick'&&typeof VIBE!=='undefined') VIBE.duck(Math.max(0.3,b.duration-Math.min(offset,b.duration))+delay); const s=c.createBufferSource(); s.buffer=b; const g=c.createGain(); if(SND.real&&offset>0){ const t0=c.currentTime+delay; g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(gain,t0+0.025); } else g.gain.value=gain; /* recorded edition: no hard edge when a roll starts mid-file */ s.connect(g).connect(master); s.start(c.currentTime+delay,Math.min(offset,Math.max(0,b.duration-0.05))); s._g=g; return s; }
+async function play(k,{gain=1,delay=0,offset=0}={}){ if(!S().sound) return null; const c=ac(); if(k!=='tick'&&typeof VIBE!=='undefined'){ const b0=BUF[srcOf(k).id]; VIBE.duck(k,(b0?Math.max(0.3,b0.duration-Math.min(offset,b0.duration)):1.0)+delay); } const b=await getBuf(k); if(!b) return null; const s=c.createBufferSource(); s.buffer=b; const g=c.createGain(); if(SND.real&&offset>0){ const t0=c.currentTime+delay; g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(gain,t0+0.025); } else g.gain.value=gain; /* recorded edition: no hard edge when a roll starts mid-file */ s.connect(g).connect(master); s.start(c.currentTime+delay,Math.min(offset,Math.max(0,b.duration-0.05))); s._g=g; return s; }
 function fadeStop(s,t=0.25){ if(!s||!ctx) return; const n=ctx.currentTime; try{ s._g.gain.cancelScheduledValues(n); s._g.gain.setValueAtTime(Math.max(0.001,s._g.gain.value),n); s._g.gain.exponentialRampToValueAtTime(0.001,n+t); s.stop(n+t+0.05);}catch(e){} }
 let lastTickAt=0;
 function tick(speed=0.6){ if(!S().sound||!S().tick) return; const now=performance.now(); if(now-lastTickAt<22) return; lastTickAt=now; const c=ac(); const b=BUF[srcOf('tick').id]; if(!b){ getBuf('tick'); return; }
@@ -2140,58 +2147,190 @@ function flipNum(el,str){ str=String(str); if(el._v===str) return; const prev=el
     a.animate(cur,{translateY:['0.7em',0],opacity:[0,1],duration:300,ease:'outCubic'}); }); }
 
 /* =========================================================
-   VIBE — background music engine. HTMLAudio (streams, no decode), external music/ folder:
-   ./music/index.js next to this file → stage.entrepreneurship-lab.com/music/ → none. Ducks under sound effects.
+   VIBE — background music engine, v2 (contract: vibe-playback-spec.md v4).
+   HTMLAudio (streams), external music/ folder: ./music/index.js → stage.entrepreneurship-lab.com/music/ → none.
+   Invariants: at most one audible element; five states (idle|playing|paused|fading|blocked); fading carries a final target;
+   owner only decides whether automatic starts may take over; every async callback checks the generation counter.
    ========================================================= */
-const VIBE_MOODS=[['warm','暖場'],['lift','提振'],['think','思考'],['finale','終場'],['night','夜空'],['day','日光']];
+const VIBE_MOODS=[['warm','暖場'],['lift','提振'],['think','思考'],['finale','終場'],['night','夜空'],['day','日光'],['songs','歌曲'],['sprint','衝刺']];
+const VIBE_MAP_MOODS=VIBE_MOODS.slice(0,6);
 const VIBE_MAP_DEF={dark:'warm',classic:'warm',ink:'warm',ncku:'lift',neon:'night',galaxy:'night',magic:'finale',wizard:'finale',wood:'day',ghibli:'day',pastel:'day'};
 const VIBE_ONLINE='https://stage.entrepreneurship-lab.com/music/';
+const VIBE_OFFSET_DB={}; /* per-mood level lives in the pipeline's LUFS targets; keep playback flat */
+const VIBE_FALLBACK={finale:'lift',sprint:'lift',songs:null}; /* single-title moods: what follows the title; null = stop; others → warm */
+let BOOTED=false;
 const VIBE=(()=>{
   const v=()=>MS('vibe');
   let lib=null, base='', status='loading', srcKind='';
   const A=[new Audio(),new Audio()]; A.forEach(x=>{ x.preload='auto'; x.volume=0; });
-  let ai=0, cur=null, playing=false, blocked=false, owner=null, duckF=1, duckT=null, stoppedByUser=false; const L=[];
+  let ai=0, state='idle', target=null, cur=null, owner=null, gen=0, pendingTrack=null, queued=null;
+  let fade=0, anim=null, endF=1, duckF=1, duckAnim=null, duckFloor=1, duckHoldUntil=0, noDuckUntil=0;
+  let pend=null, silenceT=null, inLobby=false, wantAuto=false, bufferingSince=0, loadFail=false, lastT=0, lastTAt=0, sprintArmed=false, holdF=1;
+  const rounds={}, verAlt={}, fails={}; const L=[];
   const on=f=>L.push(f); const emit=()=>L.forEach(f=>{ try{f();}catch(e){} });
-  const vol=()=>clamp((S().sound?1:0)*v().vol*duckF*(cur&&cur.gain?cur.gain:1),0,1);
-  function loadIndex(){ const tryAt=(b,kind,next)=>{ const s=document.createElement('script'); s.src=b+'index.js?v='+Date.now(); s.onload=()=>{ if(window.VIBE_INDEX&&Array.isArray(window.VIBE_INDEX.tracks)){ lib=window.VIBE_INDEX; base=b; srcKind=kind; status='ready'; emit(); } else next(); }; s.onerror=()=>{ s.remove(); next(); }; document.head.appendChild(s); };
+  const now=()=>performance.now();
+  const dbf=db=>Math.pow(10,db/20);
+  const vol=()=>clamp(fade*v().vol*(cur&&cur.gain?cur.gain:1)*dbf(cur?(VIBE_OFFSET_DB[cur.mood]||0):0)*duckF*endF*holdF*(S().sound?1:0),0,1);
+  const el=()=>A[ai];
+  /* ---------- library ---------- */
+  function loadIndex(){ const tryAt=(b,kind,next)=>{ const s=document.createElement('script'); s.src=b+'index.js?v='+Date.now(); s.onload=()=>{ if(window.VIBE_INDEX&&Array.isArray(window.VIBE_INDEX.tracks)){ lib=window.VIBE_INDEX; base=b; srcKind=kind; status='ready'; if(wantAuto){ wantAuto=false; if(inLobby&&state==='idle') onEnter(); } emit(); } else next(); }; s.onerror=()=>{ s.remove(); next(); }; document.head.appendChild(s); };
     const here=location.href.startsWith(VIBE_ONLINE.replace('music/',''));
     tryAt('music/','local',()=>here?(status='none',emit()):tryAt(VIBE_ONLINE,'online',()=>{ status='none'; emit(); })); }
   const tracksOf=m=>lib?lib.tracks.filter(t=>t.mood===m):[];
+  const titlesOf=m=>[...new Set(tracksOf(m).map(t=>t.title))];
   const moodName=m=>{ const o=VIBE_MOODS.find(x=>x[0]===m); return o?T(o[1]):m; };
   const mapFor=th=>(v().map&&v().map[th])||VIBE_MAP_DEF[th]||'warm';
   const curMood=()=>v().mood||mapFor(S().theme);
-  function pick(m){ const ts=tracksOf(m); if(!ts.length) return null; if(ts.length===1) return ts[0]; let t; let n=0; do{ t=ts[rint(ts.length)]; }while(cur&&t.id===cur.id&&++n<8); return t; }
-  /* ramp toward a live target (a function) so mute, the volume slider and ducking apply mid-fade */
-  function ramp(x,to,secs,done){ clearInterval(x._r); x._r=null; const tgt=typeof to==='function'?to:()=>to; const from=x.volume, t0=performance.now(); if(secs<=0){ x.volume=clamp(tgt(),0,1); done&&done(); return; }
-    x._r=setInterval(()=>{ const k=Math.min(1,(performance.now()-t0)/(secs*1000)); x.volume=clamp(from+(tgt()-from)*k,0,1); if(k>=1){ clearInterval(x._r); x._r=null; done&&done(); } },40); }
-  function fadeOutEl(x,secs){ if(!x.src||x.paused) return; x._out=true; ramp(x,()=>0,secs,()=>{ x.pause(); x._out=false; }); }
-  function startTrack(t,{fade=1.2,why=null}={}){ if(!t) return false; const prev=A[ai]; ai^=1; const x=A[ai]; cur=t; v().mood=t.mood; save(); owner=why; stoppedByUser=false;
-    x.onended=null; clearInterval(x._r); x._r=null; x._out=false; x.src=base+t.file; x.loop=false; x.volume=0; x.onended=()=>{ if(A[ai]===x&&playing) next(); };
-    const p=x.play(); playing=true; blocked=false; if(p&&p.catch) p.catch(()=>{ blocked=true; playing=false; emit(); }); ramp(x,vol,fade); if(prev!==x) fadeOutEl(prev,2); emit(); return true; }
-  function playMood(m,why){ if(status!=='ready'){ toast(status==='loading'?T('載入音樂中…'):T('沒有音樂：這個檔案旁沒有 music 資料夾，也連不上線上版')); return false; } const t=pick(m); if(!t){ toast(T('這個情緒還沒有曲子')); return false; } return startTrack(t,{why}); }
-  function playTrack(id){ const t=lib&&lib.tracks.find(x=>x.id===id); if(t) startTrack(t,{why:'user'}); }
-  function resume(){ const x=A[ai]; if(!x.src||(cur&&cur.mood!==curMood())) return playMood(curMood(),'user'); x._out=false; const p=x.play(); playing=true; blocked=false; stoppedByUser=false; if(p&&p.catch) p.catch(()=>{ blocked=true; playing=false; emit(); }); ramp(x,vol,0.6); emit(); return true; }
-  function pause(){ const x=A[ai]; playing=false; stoppedByUser=true; x._out=true; ramp(x,()=>0,0.4,()=>{ x.pause(); x._out=false; }); emit(); }
-  function toggle(){ if(playing) pause(); else resume(); }
-  function next(){ playMood(cur?cur.mood:curMood(),owner||'user'); }
-  function stop(fade=1.5,byUser=true){ playing=false; if(byUser) stoppedByUser=true; A.forEach(x=>fadeOutEl(x,fade)); owner=null; emit(); }
-  function applyVolume(){ const x=A[ai]; if(x.src&&!x.paused&&!x._r&&!x._out) x.volume=vol(); }
-  let duckDeadline=0;
-  function duck(secs){ if(!playing) return; duckF=0.25; const x=A[ai]; if(!x._r&&!x._out) ramp(x,vol,0.15); const until=performance.now()+secs*1000+600; if(until<=duckDeadline) return; duckDeadline=until; clearTimeout(duckT);
-    duckT=setTimeout(()=>{ duckF=1; duckDeadline=0; if(!playing) return; const y=A[ai]; if(!y._r&&!y._out) ramp(y,vol,0.6); },until-performance.now()); }
-  function onTimer(ev){ if(ev==='start'){ if(MS('timer').music&&!playing&&status==='ready') playMood('think','timer'); } else if(ev==='end'){ if(owner==='timer') stop(2,false); } }
-  function clearStop(){ stoppedByUser=false; }
-  let lastTheme=null;
-  function onTheme(){ if(S().theme===lastTheme) return; const first=lastTheme===null; lastTheme=S().theme; if(first) return; if(v().follow&&!playing){ v().mood=mapFor(S().theme); save(); emit(); } }
-  function onEnter(){ if(v().auto&&!playing&&!stoppedByUser&&status==='ready') playMood(curMood(),'lobby'); }
-  function retryIfBlocked(){ if(blocked&&cur){ const x=A[ai]; const p=x.play(); if(p&&p.then) p.then(()=>{ blocked=false; playing=true; ramp(x,vol(),0.8); emit(); }).catch(()=>{}); } }
-  document.addEventListener('keydown',retryIfBlocked,true); document.addEventListener('pointerdown',retryIfBlocked,true);
-  function pill(){ const el=$('#vbPill'); if(!el) return; if(!cur){ el.classList.remove('show'); return; } el.classList.add('show'); el.classList.toggle('paused',!playing);
-    $('#vbPillTxt').textContent=blocked?T('按 P 開始播放'):`${moodName(cur.mood)} · ${cur.title}`; }
+  /* ---------- picking: no consecutive title, every title once per round, versions alternate per start ---------- */
+  function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=rint(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+  function pick(m,avoidTitle){ const titles=titlesOf(m); if(!titles.length) return null;
+    if(!rounds[m]||!rounds[m].length) rounds[m]=shuffle(titles.slice());
+    let pool=rounds[m].filter(t=>t!==avoidTitle); if(!pool.length){ rounds[m]=shuffle(titles.slice()); pool=rounds[m].filter(t=>t!==avoidTitle); if(!pool.length) pool=rounds[m].slice(); }
+    const title=pool[rint(pool.length)]; rounds[m]=rounds[m].filter(t=>t!==title);
+    const vers=tracksOf(m).filter(t=>t.title===title); const k=m+'|'+title; verAlt[k]=((verAlt[k]||0)+1)%vers.length; return vers[verAlt[k]]; }
+  function unpick(t){ if(!t) return; rounds[t.mood]=rounds[t.mood]||[]; if(!rounds[t.mood].includes(t.title)) rounds[t.mood].unshift(t.title); const k=t.mood+'|'+t.title; const n=tracksOf(t.mood).filter(x=>x.title===t.title).length; verAlt[k]=((verAlt[k]||0)-1+n)%n; }
+  function wantMoodAfter(t){ /* which mood follows a finished track t; null = stop */
+    if(owner==='timer'&&t&&(t.mood==='think'||t.mood==='sprint')) return t.mood;
+    let m=(owner==='user'||owner==='lobby')?curMood():(t?t.mood:curMood());
+    if(t&&titlesOf(m).length===1){ m=(t.mood===m)?(m in VIBE_FALLBACK?VIBE_FALLBACK[m]:'warm'):t.mood; } /* single-title mood: play it once, then stay in the fallback */
+    return m; }
+  function nextAfter(t){ const m=wantMoodAfter(t); if(!m) return null; const avoid=t?t.title:null;
+    if(queued&&queued.mood===m&&queued.title!==avoid){ const q=queued; queued=null; return q; }
+    if(queued){ unpick(queued); queued=null; }
+    return pick(m,avoid); }
+  function preloadNext(){ const x=A[ai^1]; if(!x.paused) return; let t=null;
+    if(owner==='timer'&&cur&&cur.mood==='think'&&sprintArmed){ if(!sprintTrack) sprintTrack=pick('sprint',null); t=sprintTrack; } /* the sprint track is what comes next in a timed task */
+    else t=nextAfter(cur);
+    if(t){ x.src=base+t.file; x.load(); queued=t; } }
+  /* ---------- volume ticker: fade, duck, last-10-seconds, mute, slider; completes by elapsed time; instant when hidden ---------- */
+  function rampTo(to,secs,done){ anim={from:fade,to,t0:now(),dur:Math.max(0,secs*1000),done,g:gen}; if(document.hidden||secs<=0) tick(); }
+  function tick(){ const n=now();
+    if(anim){ const k=anim.dur?Math.min(1,(n-anim.t0)/anim.dur):1; fade=anim.from+(anim.to-anim.from)*(document.hidden?1:k); if(k>=1||document.hidden){ const a=anim; anim=null; fade=a.to; if(a.done&&a.g===gen) a.done(); } }
+    if(duckAnim){ const k=duckAnim.dur?Math.min(1,(n-duckAnim.t0)/duckAnim.dur):1; duckF=duckAnim.from+(duckAnim.to-duckAnim.from)*(document.hidden?1:k); if(k>=1||document.hidden){ duckF=duckAnim.to; duckAnim=null; } }
+    if(duckF<1&&!duckAnim&&n>=duckHoldUntil&&duckFloor<1){ const fadingDown=anim&&anim.to===0, stopping=state==='fading'&&target&&target.kind!=='track'&&target.kind!=='next'; if(!fadingDown&&!stopping){ duckAnim={from:duckF,to:1,t0:n,dur:(duckFloor<=0.2?1200:600)}; duckFloor=1; } }
+    const x=el(); if(x.src&&!x.paused) x.volume=vol();
+    if(state==='playing'&&!pend){ if(x.currentTime!==lastT){ lastT=x.currentTime; lastTAt=n; } else if(lastTAt&&n-lastTAt>10000&&!x.paused){ lastTAt=n; onError(x); } }
+    if(state==='playing'&&bufferingSince&&n-bufferingSince>20000){ bufferingSince=0; onEnded(x); }
+    const buf=state==='playing'&&((pend&&n-pend.t0>5000)||(bufferingSince&&n-bufferingSince>5000)); if(buf!==bufShown){ bufShown=buf; emit(); } }
+  let bufShown=false;
+  setInterval(tick,40);
+  function hardMute(done){ const x=el(); if(!x.src||x.paused){ fade=0; done&&done(); return; } rampTo(0,0.08,()=>{ x.pause(); done&&done(); }); }
+  /* ---------- transitions ---------- */
+  function bump(){ gen++; clearTimeout(silenceT); silenceT=null; if(pend){ clearTimeout(pend.to); pend=null; } anim=null; return gen; }
+  function guard(){ A.forEach((x,i)=>{ if(i!==ai){ if(!x.paused) x.pause(); x.volume=0; } }); if(state==='idle'||state==='paused'||state==='blocked'){ const x=el(); if(!x.paused&&state!=='blocked'){ x.volume=0; x.pause(); } } console.assert(_audible()<=1,'VIBE: two audible elements'); }
+  function _audible(){ return A.filter(x=>!x.paused&&x.volume>0&&!x.ended&&x.readyState>=3).length; }
+  function setState(s,t){ state=s; target=t||null; guard(); emit(); }
+  function startTrack(t,{fadeIn=0.8,why=null,offset=0,deadline=10000}={}){ if(!t) return false; const g=bump(); loadFail=false; bufferingSince=0;
+    const other=A[ai^1]; const reuse=other.src&&other.src.endsWith(encodeURI(t.file).replace(/^\.\//,''))||(queued&&queued.id===t.id&&other.src);
+    const prev=el(); if(!prev.paused){ prev.volume=0; prev.pause(); }
+    ai^=1; const x=el(); if(!reuse){ x.src=base+t.file; x.load(); } queued=null;
+    cur=t; if(why) owner=why; if(why==='user') { v().mood=t.mood; save(); } pendingTrack=null; fade=0; endF=1; lastT=0; lastTAt=0; duckF=1; duckAnim=null; duckFloor=1; duckHoldUntil=0;
+    state='playing'; target=null; pend={g,fadeIn,t0:now(),to:setTimeout(()=>{ if(pend&&pend.g===g){ pend=null; x.pause(); toast(T('載入失敗')); const wasSprint=t.mood==='sprint'&&owner==='timer'; cur=null; setState('idle'); if(wasSprint) playMood('think','timer',0.5); } },deadline)};
+    const seek=()=>{ if(g!==gen||x!==el()||cur!==t) return; if(offset>0&&x.readyState>=1){ try{ x.currentTime=Math.min(offset,Math.max(0,(x.duration||t.dur)-5)); }catch(e){} } };
+    if(x.readyState>=1) seek(); else x.onloadedmetadata=seek;
+    const p=x.play(); if(p&&p.then) p.then(()=>{ if(g!==gen&&x!==el()){ x.pause(); return; } }).catch(err=>{ if(g!==gen) return; const nm=err&&err.name; if(nm==='NotAllowedError'){ clearTimeout(pend&&pend.to); pend=null; setState('blocked'); } else if(nm==='AbortError'){ } else onError(x); });
+    if(x.readyState>=3&&!x.paused) onPlaying(x); emit(); return true; }
+  function onPlaying(x){ if(x!==el()||!pend||pend.g!==gen) return; if(cur) fails[cur.mood]=0; const fi=pend.fadeIn; clearTimeout(pend.to); pend=null; bufferingSince=0; noDuckUntil=now()+fi*1000; if(duckF<1&&duckAnim&&duckAnim.to<1){ duckAnim=null; duckF=1; } rampTo(1,fi); preloadNext(); emit(); }
+  function onEnded(x){ if(x!==el()||state!=='playing') return; naturalNext(); }
+  function onError(x){ if(x!==el()||(state!=='playing'&&state!=='blocked')) return; const m=cur?cur.mood:null; if(m){ fails[m]=(fails[m]||0)+1; if(fails[m]>=tracksOf(m).length){ fails[m]=0; bump(); x.pause(); cur=null; setState('idle'); toast(T('這個情緒的曲子都載不到')); return; } } naturalNext(); }
+  function naturalNext(){ const g=bump(); const x=el(); x.pause(); fade=0; const fin=cur; const t=nextAfter(fin);
+    if(!t){ cur=null; if(fin&&fin.mood==='songs'&&VIBE_FALLBACK.songs===null){ setState('idle'); } else { setState('idle'); toast(T('這個情緒還沒有曲子')); } return; }
+    if(owner==='timer'&&fin&&fin.mood==='think'&&sprintSoon){ setState('fading',{kind:'next',track:null,wait:'sprint'}); return; }
+    setState('fading',{kind:'next',track:t}); silenceT=setTimeout(()=>{ if(g!==gen) return; startTrack(t,{fadeIn:0.5,deadline:8000}); },document.hidden?0:400); }
+  function fadeTo(kind,secs,track,after){ /* fade the audible element out, then do `after` (track start / pause / stop) */
+    const g=bump(); const x=el(); setState('fading',{kind,track}); rampTo(0,secs,()=>{ if(g!==gen) return; x.pause(); after(); }); }
+  function stopNow(secs){ if(state==='idle') return; if(state==='paused'||state==='blocked'){ el().pause(); cur=null; pendingTrack=null; setState('idle'); return; } fadeTo('stop',secs,null,()=>{ cur=null; setState('idle'); }); }
+  function pauseNow(secs){ fadeTo('pause',secs,null,()=>{ setState('paused'); }); }
+  function playMood(m,why,fadeIn,opts={}){ if(status!=='ready'){ toast(status==='loading'?T('載入音樂中…'):T('沒有音樂：這個檔案旁沒有 music 資料夾，也連不上線上版')); return false; } const avoid=cur?cur.title:null; let t=null; if(queued&&queued.mood===m&&queued.title!==avoid){ t=queued; queued=null; } else { if(queued){ unpick(queued); queued=null; } t=pick(m,avoid); } if(!t){ toast(T('這個情緒還沒有曲子')); return false; } return startTrack(t,Object.assign({fadeIn,why},opts)); }
+  function switchTo(t,why,fadeOut,fadeIn){ /* from playing/fading: fade current out, then start t */
+    if(state==='fading'&&target&&(target.kind==='track'||target.kind==='next')){ hardMute(()=>startTrack(t,{fadeIn,why})); return; }
+    if(state==='playing'){ fadeTo('track',fadeOut,t,()=>startTrack(t,{fadeIn,why})); return; }
+    startTrack(t,{fadeIn,why}); }
+  /* ---------- teacher actions ---------- */
+  function toggle(){
+    if(state==='idle') return playMood(curMood(),inLobby?'lobby':'user',0.8);
+    if(state==='playing'){ pauseNow(0.4); return; }
+    if(state==='paused') return resume();
+    if(state==='blocked'){ const x=el(); const g=gen; const p=x.play(); if(p&&p.then) p.then(()=>{ if(g!==gen) return; state='playing'; pend={g,fadeIn:0.8,to:setTimeout(()=>{},1)}; onPlaying(x); }).catch(()=>{}); return; }
+    if(state==='fading'){ const k=target&&target.kind; if(k==='pause'){ const x=el(); if(x.paused||fade===0){ bump(); state='paused'; target=null; return resume(); } bump(); state='playing'; target=null; duckF=1; duckAnim=null; duckFloor=1; duckHoldUntil=0; rampTo(1,0.3); emit(); return; }
+      if(k==='track'||k==='next'){ const t=target.track; bump(); hardMute(()=>{ pendingTrack=t; setState('paused'); }); return; }
+      bump(); hardMute(()=>{ cur=null; setState('idle'); }); } }
+  function resume(){ if(state!=='paused') return false; const x=el(); const moodMismatch=owner==='user'&&cur&&cur.mood!==curMood();
+    if(pendingTrack||!x.src||moodMismatch||x.ended){ const t=pendingTrack||(moodMismatch?pick(curMood(),cur&&cur.title):null); pendingTrack=null; return t?startTrack(t,{fadeIn:0.8}):playMood(curMood(),owner||'user',0.8); }
+    duckF=1; duckAnim=null; duckFloor=1; duckHoldUntil=0;
+    const g=bump(); state='playing'; target=null; const p=x.play(); if(p&&p.then) p.then(()=>{ if(g!==gen) return; rampTo(1,0.5); emit(); }).catch(err=>{ if(g!==gen) return; if(err&&err.name==='NotAllowedError') setState('blocked'); }); if(x.readyState>=3) rampTo(1,0.5); emit(); return true; }
+  const userWhy=()=>(inLobby&&owner!=='user')?'lobby':'user'; /* adjusting the lobby is not the teacher taking the music over */
+  function next(){ /* Shift+P: keep owner and mood */
+    if(state==='idle'||state==='blocked') return playMood(curMood(),inLobby?'lobby':'user',0.8);
+    if(state==='fading'&&target&&(target.kind==='track'||target.kind==='next')&&target.track){ const tt=target.track; bump(); hardMute(()=>startTrack(tt,{fadeIn:0.8})); return; }
+    const t=nextAfter(cur); if(!t){ toast(T('這個情緒還沒有曲子')); return; }
+    if(state==='paused'||(state==='fading'&&target&&target.kind==='pause')){ bump(); hardMute(()=>{ cur=t; pendingTrack=t; setState('paused'); }); return; }
+    switchTo(t,null,0.6,0.8); }
+  function setMood(m){ v().mood=m; save(); if(queued&&queued.mood!==m){ unpick(queued); queued=null; }
+    if(state==='playing'||(state==='fading'&&target&&(target.kind==='track'||target.kind==='next'))){ const t=pick(m,cur?cur.title:null); if(!t){ toast(T('這個情緒還沒有曲子')); emit(); return; } switchTo(t,userWhy(),0.6,0.8); return; }
+    if(state==='paused'||(state==='fading'&&target&&target.kind==='pause')){ if(owner!=='lobby'||!inLobby) owner='user'; pendingTrack=null; }
+    if(state==='blocked'){ playMood(m,userWhy(),0.8); return; } emit(); }
+  function playTrack(id){ const t=lib&&lib.tracks.find(x=>x.id===id); if(!t) return;
+    if(state==='paused'||(state==='fading'&&target&&target.kind==='pause')){ bump(); hardMute(()=>{ cur=t; pendingTrack=t; if(owner!=='lobby'||!inLobby) owner='user'; v().mood=t.mood; save(); setState('paused'); }); return; }
+    if(state==='blocked'){ startTrack(t,{fadeIn:0.8,why:userWhy()}); return; }
+    switchTo(t,userWhy(),0.6,0.8); }
+  /* ---------- system events ---------- */
+  function onEnter(){ inLobby=true; if(!BOOTED) return; if(status==='loading'){ wantAuto=true; return; } if(!v().auto||status!=='ready') return;
+    if(state==='paused'){ if(owner==='timer') return; resume(); return; } /* the teacher's own pause in the lobby was momentary: coming back resumes it */
+    if(state==='fading'&&target&&target.kind==='stop'){ bump(); el().pause(); fade=0; cur=null; state='idle'; } /* a stop still fading counts as idle */
+    if(state==='idle'||state==='blocked'){ playMood(curMood(),'lobby',1.2); } }
+  function onLeave(){ inLobby=false; wantAuto=false; }
+  function hold(f){ holdF=f; } /* event overlay: keep music down until the banner closes */
+  function onTheme(){ if(v().follow){ v().mood=mapFor(S().theme); save(); emit(); } }
+  let sprintSoon=false, sprintTrack=null;
+  function onTimer(ev,info={}){ try{ _onTimer(ev,info); }catch(err){ console.error('VIBE.onTimer',ev,err); } }
+  function _onTimer(ev,info={}){ const tm=MS('timer');
+    if(ev==='start'){ endF=1; sprintSoon=false; sprintTrack=null; sprintArmed=!!info.sprintArmed;
+      if(!info.musicOK){ if(info.first&&tm.music&&status==='ready'&&tm.mode==='single'&&info.queue) toast(T('報告序列開著，不配樂（計時面板可關）'));
+        if(owner!=='user'){ if(state==='playing'||(state==='fading'&&target&&(target.kind==='track'||target.kind==='next'))) stopNow(0.6); else if(state==='paused'){ el().pause(); cur=null; pendingTrack=null; setState('idle'); } } return; }
+      if(!tm.music||status!=='ready') return;
+      if(state==='idle'||state==='blocked'){ playMood('think','timer',1.5); return; }
+      if(state==='paused'){ if(owner==='user'){ if(info.first) toast(t`配樂照舊：${moodName(cur.mood)}`); return; } el().pause(); pendingTrack=null; playMood('think','timer',1.5); return; }
+      if(state==='playing'){ if(owner==='user'){ if(info.first) toast(t`配樂照舊：${moodName(cur.mood)}`); return; } if(owner==='lobby'){ const tr=pick('think',cur.title); if(tr) switchTo(tr,'timer',0.6,1.5); return; } if(cur&&cur.mood==='sprint'){ const tr=pick('think',cur.title); if(tr) switchTo(tr,'timer',0.6,1.0); } return; }
+      if(state==='fading'){ const k=target&&target.kind; if(k==='stop'||((k==='track'||k==='next')&&owner!=='user')){ const tr=pick('think',cur?cur.title:null); if(tr){ bump(); hardMute(()=>startTrack(tr,{fadeIn:1.5,why:'timer'})); } } }
+      return; }
+    if(ev==='pause'){ if(owner!=='timer') return; if(state==='playing') pauseNow(0.4); else if(state==='fading'&&target&&(target.kind==='track'||target.kind==='next')){ const tr=target.track; bump(); hardMute(()=>{ pendingTrack=tr; setState('paused'); }); } return; }
+    if(ev==='resume'){ if(owner!=='timer'||state!=='paused') return; if(pendingTrack&&pendingTrack.mood==='sprint'&&sprintSoon){ pendingTrack=null; return; } /* stay silent; the sprint cue starts it at N:00 */ resume(); return; }
+    if(ev==='reset'){ endF=1; sprintSoon=false; sprintTrack=null; sprintArmed=false; if(owner!=='timer') return; if(state==='playing') stopNow(0.6); else if(state==='paused'||state==='blocked') stopNow(0); else if(state==='fading'){ bump(); hardMute(()=>{ cur=null; setState('idle'); }); } return; }
+    if(ev==='sprintSoon'){ if(owner==='timer') sprintSoon=true; return; }
+    if(ev==='sprintPre'){ if(owner!=='timer'||!cur||cur.mood!=='think') return; if(!sprintTrack) sprintTrack=(queued&&queued.mood==='sprint')?queued:pick('sprint',null); if(!sprintTrack) return; sprintSoon=true;
+      if(state==='playing'){ const g=bump(); const x=el(); setState('fading',{kind:'track',track:sprintTrack}); rampTo(0,0.6,()=>{ if(g!==gen) return; x.pause(); }); } return; }
+    if(ev==='sprint'){ if(owner!=='timer'||!sprintSoon||!sprintTrack){ sprintSoon=false; return; } const tr=sprintTrack; sprintTrack=null; sprintSoon=false;
+      if(cur===tr&&state==='playing') return; /* already running (resumed early) */
+      if(!info.quiet) play('chime',{gain:1}); toast(t`最後 ${info.N} 分鐘`);
+      const tail=(tr.dur||0)-(tr.endLoud||((tr.dur||0)-1.0)); const offset=Math.max(0,(tr.dur||0)-info.N*60-tail-0.25);
+      if(state==='fading'||state==='playing'){ bump(); hardMute(()=>startTrack(tr,{fadeIn:0.3,why:'timer',offset,deadline:3000})); } else startTrack(tr,{fadeIn:0.3,why:'timer',offset,deadline:3000}); return; }
+    if(ev==='unsprint'){ sprintSoon=false; sprintTrack=null; if(owner!=='timer') return; if(cur&&cur.mood==='sprint'&&state==='playing'){ const tr=pick('think',null); if(tr) switchTo(tr,'timer',0.6,1.0); } else if(state==='fading'&&target&&target.kind==='track'&&target.track&&target.track.mood==='sprint'){ const tr=pick('think',null); if(tr){ bump(); hardMute(()=>startTrack(tr,{fadeIn:1.0,why:'timer'})); } } return; }
+    if(ev==='last10'){ endF=(owner==='timer'&&state==='playing')?0.4+0.6*clamp(info.rem/10000,0,1):1; return; }
+    if(ev==='end'){ sprintSoon=false; sprintTrack=null; if(owner!=='timer') return;
+      if(!info.continues||!info.nextMusic){ if(state==='playing'||state==='fading'){ const g=bump(); const x=el(); setState('fading',{kind:'stop'}); rampTo(0,0.15,()=>{ if(g!==gen) return; x.pause(); cur=null; endF=1; setState('idle'); }); } else if(state==='paused'){ stopNow(0); } return; }
+      if(cur&&cur.mood==='sprint'&&state==='playing'){ const tr=pick('think',null); if(tr) switchTo(tr,'timer',0.6,1.0); } endF=1; return; } }
+  function onLobbyEnd(){ if(owner==='user') return; if(state==='playing'){ fadeTo('stop',2.0,null,()=>{ cur=null; setState('idle'); }); } else if(state==='fading'&&target&&target.kind!=='stop'){ const g=bump(); const x=el(); setState('fading',{kind:'stop'}); rampTo(0,1.0,()=>{ if(g!==gen) return; x.pause(); cur=null; setState('idle'); }); } }
+  /* ---------- ducking under sound effects (two levels) ---------- */
+  function duck(k,secs){ if(state!=='playing'&&!(state==='fading'&&target&&target.kind==='track')) return; if(pend) return; const n=now(); const chime=k==='chime'||secs<0.7; if(chime&&n<noDuckUntil) return; if(chime&&endF<1) return;
+    const floor=chime?0.4:0.1, down=chime?150:100, hold=chime?0:1000;
+    duckFloor=Math.min(duckFloor,floor); duckHoldUntil=Math.max(duckHoldUntil,n+secs*1000+hold);
+    if(duckF>floor) duckAnim={from:duckF,to:floor,t0:n,dur:down}; }
+  /* ---------- element events ---------- */
+  A.forEach(x=>{ x.addEventListener('ended',()=>onEnded(x)); x.addEventListener('error',()=>onError(x)); x.addEventListener('playing',()=>onPlaying(x)); x.addEventListener('canplay',()=>{ if(x!==el()) return; if(pend&&!x.paused) onPlaying(x); bufferingSince=0; emit(); }); x.addEventListener('waiting',()=>{ if(x===el()&&state==='playing'&&!bufferingSince) bufferingSince=now(); emit(); }); x.addEventListener('stalled',()=>{ if(x===el()&&state==='playing'&&!bufferingSince) bufferingSince=now(); }); });
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) guard(); });
+  /* ---------- display ---------- */
+  const displayTrack=()=>(state==='fading'&&target&&(target.kind==='track'||target.kind==='next')&&target.track)?target.track:(state==='paused'&&pendingTrack)?pendingTrack:cur;
+  const displayPaused=()=>state==='paused'||state==='idle'||(state==='fading'&&target&&(target.kind==='pause'||target.kind==='stop'));
+  const lobbyMood=()=>{ const t=displayTrack(); return t?t.mood:curMood(); };
+  function pill(){ const p=$('#vbPill'); if(!p) return; const t=displayTrack(); if(!t||state==='idle'){ p.classList.remove('show'); return; } p.classList.add('show'); p.classList.toggle('paused',displayPaused());
+    const buffering=state==='playing'&&((pend&&now()-pend.t0>5000)||(bufferingSince&&now()-bufferingSince>5000));
+    const cls=document.body.classList.contains('classmode'); /* on the projector: mood only, never track titles */
+    $('#vbPillTxt').textContent=state==='blocked'?T('按 P 開始播放'):loadFail?T('載入失敗'):buffering?T('載入中…'):cls?moodName(t.mood):`${moodName(t.mood)} · ${t.title}`; }
   on(pill); $('#vbPill').onclick=()=>toggle();
   loadIndex();
-  return { on, toggle, next, stop, pause, resume, playMood, playTrack, duck, onTimer, onTheme, onEnter, clearStop, applyVolume, tracksOf, moodName, mapFor, curMood,
-    get status(){ return status; }, get els(){ return A; }, get owner(){ return owner; }, get srcKind(){ return srcKind; }, get playing(){ return playing; }, get blocked(){ return blocked; }, get cur(){ return cur; }, get lib(){ return lib; } };
+  return { on, toggle, next, resume, setMood, playTrack, playMood, duck, hold, onTimer, onLobbyEnd, onEnter, onLeave, onTheme, tracksOf, moodName, mapFor, curMood, lobbyMood, displayTrack, displayPaused, _audible,
+    get status(){ return status; }, get srcKind(){ return srcKind; }, get state(){ return state; }, get playing(){ return state==='playing'; }, get cur(){ return cur; }, get owner(){ return owner; }, get lib(){ return lib; }, get els(){ return A; }, get target(){ return target; }, get gen(){ return gen; } };
 })();
 
 /* =========================================================
@@ -2210,7 +2349,7 @@ function paintKeyHint(){ const h=$('#keyHint'); if(!h) return; const tm=MS('time
     group:[[T('空白鍵'),T('開始分組')],['L',T('選組長')],['Enter',T('跳過動畫')]],
     order:[[T('空白鍵'),T('開始抽籤')],['Enter',T('跳過動畫')]],
     timer:tm.mode==='duel'?[[T('空白鍵'),T('換方')],['Enter',T('暫停')],['R',T('重設')]]:[[T('空白鍵'),T('開始／暫停')],['↑ ↓',T('±30 秒')],['R',T('重設')],['N / B',tm.mode==='agenda'?T('換段'):T('換報告者')]],
-    vibe:[[T('空白鍵'),T('配樂')],['Shift+P',T('下一首')]].concat(MS('vibe').cd>0?[['Enter',T('倒數')]]:[])};
+    vibe:[[T('空白鍵'),T('播放／暫停')],['Shift+P',T('下一首')]].concat(MS('vibe').cd>0?[['Enter',(M.vibe&&M.vibe.cdRunning&&M.vibe.cdRunning())?T('暫停倒數'):T('倒數')],['R',T('重設倒數')]]:[])};
   const list=(cur==='reels'&&M.reels&&M.reels.hints)?M.reels.hints():(H[cur]||[]);
   const glob=[['F',document.body.classList.contains('classmode')?T('離開上課模式'):T('上課模式')]].concat((cur!=='vibe'&&VIBE.status==='ready')?[['P',VIBE.playing?T('暫停配樂'):T('播配樂')]]:[]).concat([['?',T('全部快捷鍵')]]);
   h.innerHTML=list.concat(glob).map(([k,t])=>`<span class="kh"><kbd>${esc(k)}</kbd>${esc(t)}</span>`).join('<span class="ks">·</span>'); }
@@ -2681,7 +2820,7 @@ const EV=(function(){
     const picks=draw(scope==='group'?gs.length:1);
     const its=scope==='group'?gs.map((g,i)=>({g,text:picks[i].text,kind:picks[i].kind})):[{text:picks[0].text,kind:picks[0].kind}];
     E.active={scope,items:its,t:Date.now(),resEnd:null,n:E.log.length+1}; E.log.push({t:E.active.t,scope,items:its}); save();
-    if(E.pause) M.timer.pauseIfRunning();
+    if(E.pause) M.timer.pauseIfRunning(); VIBE.hold(0.4);
     ac(); alertSting(); shown=0; open=true; stopCd(); document.body.classList.remove('evbar'); render(); ov().classList.add('show');
     if(scope==='class') setTimeout(()=>{ if(open){ const c=ov().querySelector('.evCard'); if(c) c.classList.add('flip'); tick(0.05); } },420);
     log(); }
@@ -2698,7 +2837,7 @@ const EV=(function(){
     if(all){ for(let i=shown;i<n;i++) cards[i].classList.add('flip'); shown=n; tick(0.05); }
     else { cards[shown].classList.add('flip'); cards[shown].scrollIntoView({block:'nearest',behavior:'smooth'}); shown++; tick(0.4); }
     after(); return true; }
-  function close(){ if(!open) return; open=false; ov().classList.remove('show'); const E=ev(); if(E.active&&E.respMin>0){ E.active.resEnd=Date.now()+E.respMin*60000; save(); } bar(); }
+  function close(){ if(!open) return; open=false; VIBE.hold(1); ov().classList.remove('show'); const E=ev(); if(E.active&&E.respMin>0){ E.active.resEnd=Date.now()+E.respMin*60000; save(); } bar(); }
   function flipClass(){ const A=ev().active; if(!A||A.scope!=='class') return false; const c=ov().querySelector('.evCard'); if(!c||c.classList.contains('flip')) return false; c.classList.add('flip'); tick(0.05); return true; }
   function key(e){ if(e.key==='Escape'){ close(); return true; } if([' ','PageDown','ArrowRight'].includes(e.key)){ if(!flipClass()&&!flip(false)) close(); return true; } if(e.key==='Enter'){ if(!flipClass()&&!flip(true)) close(); return true; } return true; }
   function clear(){ ev().active=null; save(); stopCd(); document.body.classList.remove('evbar'); $('#evBarBody').innerHTML=''; $('#evBarCd').textContent=''; if(cur==='reels') M.reels.refreshHist(); }
@@ -2736,47 +2875,53 @@ const EV=(function(){
    ========================================================= */
 (function(){
   const st=MS('timer'); const C=578.05;
-  const AG=()=>st.agenda.split(/\n/).map(l=>l.trim()).filter(Boolean).map(l=>{ const m=l.match(/^(.*?)[\s:：]*(\d+(?:\.\d+)?)\s*(分鐘|分|mins?|minutes?|m|秒|secs?|seconds?|s)?\s*$/i); if(!m) return {name:l,secs:300}; const u=(m[3]||'').toLowerCase(); const sec=/^(秒|s|sec|secs|second|seconds)$/.test(u); return {name:m[1].trim()||l,secs:Math.max(5,Math.round(parseFloat(m[2])*(sec?1:60)))}; });
+  const AG=()=>st.agenda.split(/\n/).map(l=>l.trim()).filter(Boolean).map(l0=>{ const music=/[♪♫]\s*$/.test(l0); const l=l0.replace(/\s*[♪♫]\s*$/,''); const r=(o=>(o.music=music,o)); return r((()=>{ const m=l.match(/^(.*?)[\s:：]*(\d+(?:\.\d+)?)\s*(分鐘|分|mins?|minutes?|m|秒|secs?|seconds?|s)?\s*$/i); if(!m) return {name:l,secs:300}; const u=(m[3]||'').toLowerCase(); const sec=/^(秒|s|sec|secs|second|seconds)$/.test(u); return {name:m[1].trim()||l,secs:Math.max(5,Math.round(parseFloat(m[2])*(sec?1:60)))}; })()); });
+  /* music is allowed only when nobody is about to address the room: single timer without a presenter queue, or an agenda line ending with ♪ */
+  const musicOK=()=>st.mode==='single'?!(st.useQueue&&queue().length):st.mode==='agenda'?!!(AG()[st.ai]&&AG()[st.ai].music):false;
   const curSecs=()=>{ if(st.mode!=='agenda') return st.secs; const a=AG(); st.ai=clamp(st.ai,0,Math.max(0,a.length-1)); return a.length?a[st.ai].secs:300; };
-  let TS={run:false,end:0,rem:curSecs()*1000,total:curSecs()*1000,over:false,warned:false,lastS:null}; let autoT=null; const cancelAuto=()=>{ clearTimeout(autoT); autoT=null; };
+  let TS={run:false,end:0,rem:curSecs()*1000,total:curSecs()*1000,over:false,warned:false,lastS:null,sprinted:false,sprintPre:false,sprintSoon:false};
+  const startInfo=(first)=>({musicOK:musicOK(),first:!!first,queue:st.mode==='single'&&!!(st.useQueue&&queue().length),sprintArmed:st.sprint>0&&st.mode!=='duel'&&TS.total>=(2*st.sprint+1)*60000}); let autoT=null; const cancelAuto=()=>{ clearTimeout(autoT); autoT=null; };
   let D={run:false,active:0,end:0,rem:[st.duelSecs*1000,st.duelSecs*1000],over:[false,false]};
   const fmt=ms=>{ const s=Math.ceil(Math.abs(ms)/1000); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); };
   const fmtUp=ms=>{ const s=Math.floor(Math.abs(ms)/1000); return '+'+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); };
-  function resetS(){ cancelAuto(); const sec=curSecs(); TS={run:false,end:0,rem:sec*1000,total:sec*1000,over:false,warned:false,lastS:null}; drawS(); }
-  function resetD(){ D={run:false,active:0,end:0,rem:[st.duelSecs*1000,st.duelSecs*1000],over:[false,false]}; drawD(); }
+  function resetS(silent){ cancelAuto(); const sec=curSecs(); TS={run:false,end:0,rem:sec*1000,total:sec*1000,over:false,warned:false,lastS:null,sprinted:false,sprintPre:false,sprintSoon:false}; if(!silent) VIBE.onTimer('reset'); drawS(); }
+  function resetD(){ D={run:false,active:0,end:0,rem:[st.duelSecs*1000,st.duelSecs*1000],over:[false,false]}; VIBE.onTimer('reset'); drawD(); }
   function drawS(){ const now=performance.now(); let rem=TS.run?TS.end-now:TS.rem; const wrap=$('#tSingle');
-    if(rem<=0&&!TS.over&&TS.run){ TS.over=true; play('gong',{gain:1}); flash(); VIBE.onTimer('end');
-      if(st.mode==='agenda'&&st.auto&&st.ai<AG().length-1){ const nxt=AG()[st.ai+1], me=TS; toast(t`接續：${nxt.name}`); cancelAuto(); autoT=setTimeout(()=>{ autoT=null; if(st.mode!=='agenda'||!st.auto||TS!==me||!TS.over||st.ai>=AG().length-1) return; st.ai++; save(); resetS(); TS.end=performance.now()+TS.rem; TS.run=true; VIBE.onTimer('start'); drawQ(); },1100); } }
+    if(rem<=0&&!TS.over&&TS.run){ TS.over=true; play('gong',{gain:1}); flash(); const continues=st.mode==='agenda'&&st.auto&&st.ai<AG().length-1; VIBE.onTimer('end',{continues,nextMusic:continues&&!!AG()[st.ai+1].music});
+      if(continues){ const nxt=AG()[st.ai+1], me=TS; toast(t`接續：${nxt.name}`); cancelAuto(); autoT=setTimeout(()=>{ autoT=null; if(st.mode!=='agenda'||!st.auto||TS!==me||!TS.over||st.ai>=AG().length-1) return; st.ai++; save(); resetS(true); TS.end=performance.now()+TS.rem; TS.run=true; VIBE.onTimer('start',startInfo(false)); drawQ(); },1100); } }
+    if(TS.run&&rem>0&&!TS.over&&st.sprint>0&&st.mode!=='duel'&&TS.total>=(2*st.sprint+1)*60000&&!TS.sprinted){ const N=st.sprint; if(!TS.sprintSoon&&rem<=N*60000+60000){ TS.sprintSoon=true; VIBE.onTimer('sprintSoon'); } if(!TS.sprintPre&&rem<=N*60000+600){ TS.sprintPre=true; VIBE.onTimer('sprintPre',{N}); } if(rem<=N*60000){ TS.sprinted=true; VIBE.onTimer('sprint',{N,rem,quiet:st.warn>=N*60}); } }
+    if(TS.run) VIBE.onTimer('last10',{rem});
     if(TS.run&&!TS.warned&&st.warn>0&&TS.total>st.warn*1000&&rem<=st.warn*1000&&rem>0){ TS.warned=true; play('chime',{gain:1}); toast(t`剩 ${st.warn} 秒`); }
     const sec=Math.ceil(rem/1000); if(TS.run&&rem>0&&sec<=10&&sec!==TS.lastS){ TS.lastS=sec; tick(0.3); }
     wrap.classList.toggle('hot',rem>0&&rem<=10000&&TS.run); wrap.classList.toggle('over',rem<=0&&TS.over);
     flipNum($('#tTime'),rem>0||!TS.over?fmt(Math.max(0,rem)):fmtUp(rem));
     $('#tState').textContent=TS.over?T('時間到（超時中）'):TS.run?T('進行中'):(TS.rem<TS.total?T('暫停中 · 空白鍵繼續'):T('按空白鍵開始'));
-    if(st.mode==='agenda'){ const a=AG(); const later=a.slice(st.ai+1).reduce((x,y)=>x+y.secs,0)*1000; const tot=Math.max(0,rem)+later; const html=!a.length?'':(st.ai+1<a.length?t`下一段：${esc(a[st.ai+1].name)}（${Math.round(a[st.ai+1].secs/60)} 分）· `:T('最後一段 · '))+t`全部剩餘 ${fmt(tot)}`; const tn=$('#tNext'); if(tn._h!==html){ tn._h=html; tn.innerHTML=html; } }
+    if(st.mode==='agenda'){ const a=AG(); const later=a.slice(st.ai+1).reduce((x,y)=>x+y.secs,0)*1000; const tot=Math.max(0,rem)+later; const html=!a.length?'':(st.ai+1<a.length?t`下一段：${esc(a[st.ai+1].name)+(a[st.ai+1].music?' ♪':'')}（${Math.round(a[st.ai+1].secs/60)} 分）· `:T('最後一段 · '))+t`全部剩餘 ${fmt(tot)}`; const tn=$('#tNext'); if(tn._h!==html){ tn._h=html; tn.innerHTML=html; } }
     $('#tArc').setAttribute('stroke-dashoffset',String(C*(1-clamp(rem/TS.total,0,1)))); }
   function drawD(){ const now=performance.now(); [0,1].forEach(i=>{ let r=D.rem[i]; if(D.run&&D.active===i) r=D.end-now;
       if(r<=0&&!D.over[i]&&D.run&&D.active===i){ D.over[i]=true; play('gong',{gain:1}); flash(); }
       const el=$$('.side')[i]; el.classList.toggle('active',D.active===i&&(D.run||D.rem[i]<st.duelSecs*1000)); el.classList.toggle('over',r<=0);
       flipNum(el.querySelector('.st'),r>0?fmt(r):fmtUp(r)); el.querySelector('.hint').style.visibility=D.run&&D.active===i?'visible':'hidden'; }); }
   const queue=()=>{ const L=MS('order').last; return (L&&L.mode==='order')?L.rows.map(r=>r.value):[]; };
-  function drawQ(){ if(st.mode==='agenda'){ const a=AG(); curSecs(); $('#tNow').innerHTML=a.length?`<span style="color:var(--ink-3);font-weight:600;font-size:.5em">${st.ai+1}${T("／")}${a.length}</span> ${esc(a[st.ai].name)}`:T('請在右側輸入課堂時間軸'); $('#tAgendaBar').classList.add('show'); $('#tAgendaBar').innerHTML=a.map((x,i)=>`<div class="${i<st.ai?'done':i===st.ai?'now':''}" style="flex:${x.secs}"></div>`).join(''); return; }
+  function drawQ(){ if(st.mode==='agenda'){ const a=AG(); curSecs(); $('#tNow').innerHTML=a.length?`<span style="color:var(--ink-3);font-weight:600;font-size:.5em">${st.ai+1}${T("／")}${a.length}</span> ${esc(a[st.ai].name)}${a[st.ai].music?' <span style="color:var(--ink-3);font-size:.6em">♪</span>':''}`:T('請在右側輸入課堂時間軸'); $('#tAgendaBar').classList.add('show'); $('#tAgendaBar').innerHTML=a.map((x,i)=>`<div class="${i<st.ai?'done':i===st.ai?'now':''}" style="flex:${x.secs}"></div>`).join(''); return; }
     $('#tAgendaBar').classList.remove('show'); $('#tNext')._h=undefined; const q=queue(), on=st.useQueue&&q.length&&st.mode==='single'; st.qi=clamp(st.qi,0,Math.max(0,q.length-1));
     $('#tNow').innerHTML=on?`<span style="color:var(--ink-2);font-weight:600;font-size:.6em">${T("報告中")}</span> ${esc(disp(q[st.qi]))} <span style="color:var(--ink-3);font-weight:600;font-size:.5em">${st.qi+1}${T("／")}${q.length}</span>`:'';
     $('#tNext').innerHTML=on?(st.qi+1<q.length?`${T("下一位：")}${esc(disp(q[st.qi+1]))} ${T("· 按")} <kbd>N</kbd> ${T("換人")}`:T('這是最後一位')):''; }
-  function stepQ(d){ const q=queue(); if(!q.length){ toast(T('先到「抽籤」抽出報告順序')); return; } const n=clamp(st.qi+d,0,q.length-1); if(n===st.qi){ toast(d>0?T('已經是最後一位'):T('已經是第一位')); return; } st.qi=n; save(); resetS(); drawQ(); ac(); play('chime',{gain:.7}); }
-  function stepA(d){ const a=AG(); if(!a.length) return; const n=clamp(st.ai+d,0,a.length-1); if(n===st.ai){ toast(d>0?T('已經是最後一段'):T('已經是第一段')); return; } const was=TS.run&&!TS.over; st.ai=n; save(); resetS(); if(was){ TS.end=performance.now()+TS.rem; TS.run=true; } drawQ(); ac(); play('chime',{gain:.7}); }
+  function stepQ(d){ const q=queue(); if(!q.length){ toast(T('先到「抽籤」抽出報告順序')); return; } const n=clamp(st.qi+d,0,q.length-1); if(n===st.qi){ toast(d>0?T('已經是最後一位'):T('已經是第一位')); return; } st.qi=n; save(); resetS(); VIBE.onTimer('start',{musicOK:false}); drawQ(); ac(); play('chime',{gain:.7}); } /* a presenter change: whoever is next is about to speak */
+  function stepA(d){ const a=AG(); if(!a.length) return; const n=clamp(st.ai+d,0,a.length-1); if(n===st.ai){ toast(d>0?T('已經是最後一段'):T('已經是第一段')); return; } const was=TS.run&&!TS.over; st.ai=n; save(); resetS(); if(was){ TS.end=performance.now()+TS.rem; TS.run=true; VIBE.onTimer('start',startInfo(false)); } drawQ(); ac(); play('chime',{gain:.7}); }
   const stepAny=d=>st.mode==='agenda'?stepA(d):stepQ(d);
   function loop(){ if(cur==='timer'||TS.run||D.run){ if(st.mode!=='duel') drawS(); else drawD(); } requestAnimationFrame(loop); }
-  requestAnimationFrame(loop);
-  function toggleS(){ ac(); if(TS.run){ TS.rem=TS.end-performance.now(); TS.run=false; } else { if(TS.over) { resetS(); } const fresh=TS.rem===TS.total; TS.end=performance.now()+TS.rem; TS.run=true; play('chime',{gain:0.5}); if(fresh) VIBE.onTimer('start'); } drawS(); }
-  function swapD(){ ac(); const now=performance.now(); if(!D.run){ D.run=true; D.end=now+D.rem[D.active]; play('chime',{gain:0.5}); return; } D.rem[D.active]=D.end-now; D.active^=1; D.end=now+D.rem[D.active]; tick(0.2); }
+  requestAnimationFrame(loop); setInterval(()=>{ if(TS.run&&st.mode!=='duel') drawS(); },250); /* keeps the timer honest when the window is occluded and rAF stalls */
+  function toggleS(){ ac(); if(TS.run){ TS.rem=TS.end-performance.now(); TS.run=false; VIBE.onTimer('pause'); } else { if(TS.over) { resetS(true); } const fresh=TS.rem===TS.total; TS.end=performance.now()+TS.rem; TS.run=true; play('chime',{gain:0.5}); if(fresh) VIBE.onTimer('start',startInfo(true)); else VIBE.onTimer('resume'); } drawS(); }
+  function swapD(){ ac(); const now=performance.now(); if(!D.run){ D.run=true; D.end=now+D.rem[D.active]; play('chime',{gain:0.5}); VIBE.onTimer('start',{musicOK:false}); return; } D.rem[D.active]=D.end-now; D.active^=1; D.end=now+D.rem[D.active]; tick(0.2); }
   function pauseD(){ const now=performance.now(); if(D.run){ D.rem[D.active]=D.end-now; D.run=false; } else { D.run=true; D.end=now+D.rem[D.active]; } }
   function paint(){ paintKeyHint(); const duel=st.mode==='duel', single=st.mode==='single', agenda=st.mode==='agenda'; $('#tSingle').classList.toggle('off',duel); $('#tDuel').classList.toggle('on',duel); $('#tSingleCtl').style.display=single?'':'none'; $('#tDuelCtl').style.display=duel?'':'none'; $('#tAgendaCtl').style.display=agenda?'':'none'; $('#tPresets').style.display=agenda?'none':''; $('#tAgenda').value=st.agenda; $('#tAuto').checked=st.auto; $('#tWarn2').value=st.warn;
     $('#tMin').value=Math.floor(st.secs/60); $('#tSec').value=st.secs%60; $('#tWarn').value=st.warn; $('#tA').value=st.a; $('#tB').value=st.b; $('#tDuelSecs').value=st.duelSecs;
     const sides=$$('.side'); sides[0].style.setProperty('--sc','#e5484d'); sides[1].style.setProperty('--sc','#30a46c'); sides[0].querySelector('.sl').textContent=st.a; sides[1].querySelector('.sl').textContent=st.b;
     $('#tPresets').innerHTML=[30,60,120,180,300,600].map(s=>`<button class="sm" data-s="${s}">${s<60?s+T(' 秒'):(s/60)+T(' 分')}</button>`).join('');
-    $$('#tPresets button').forEach(b=>b.onclick=()=>{ st.secs=+b.dataset.s; save(); resetS(); paint(); }); $('#tUseQ').checked=st.useQueue; $('#tMusic').checked=st.music; $('#tMusicRow').style.display=duel?'none':''; drawQ(); drawS(); drawD(); }
-  $('#tMusic').onchange=e=>{ st.music=e.target.checked; save(); };
+    $$('#tPresets button').forEach(b=>b.onclick=()=>{ st.secs=+b.dataset.s; save(); resetS(); paint(); }); $('#tUseQ').checked=st.useQueue; $('#tMusic').checked=st.music; $('#tSprint').value=st.sprint; $('#tSprint').disabled=!st.music; $('#tMusicRow').style.display=duel?'none':''; $('#tSprintRow').style.display=duel?'none':''; drawQ(); drawS(); drawD(); }
+  $('#tMusic').onchange=e=>{ st.music=e.target.checked; $('#tSprint').disabled=!st.music; save(); };
+  $('#tSprint').onchange=e=>{ st.sprint=clamp(parseInt(e.target.value)||0,0,30); e.target.value=st.sprint; save(); };
   $('#tUseQ').onchange=e=>{ st.useQueue=e.target.checked; save(); drawQ(); }; $('#tNextP').onclick=()=>stepQ(1); $('#tPrevP').onclick=()=>stepQ(-1);
   segBind('#tMode',()=>st.mode,v=>{ if(v===st.mode) return; if(TS.run){ TS.rem=TS.end-performance.now(); TS.run=false; } st.mode=v; resetS(); paint(); });
   let agT; $('#tAgenda').oninput=e=>{ st.agenda=e.target.value; st.ai=clamp(st.ai,0,Math.max(0,AG().length-1)); save(); clearTimeout(agT); agT=setTimeout(()=>{ if(!TS.run){ resetS(); } drawQ(); },300); };
@@ -2788,14 +2933,15 @@ const EV=(function(){
   $('#tDuelSecs').onchange=e=>{ st.duelSecs=clamp(parseInt(e.target.value)||60,10,3600); save(); resetD(); };
   $('#tGo').onclick=()=>st.mode!=='duel'?toggleS():(D.run?pauseD():swapD());
   $('#tReset').onclick=()=>st.mode!=='duel'?resetS():resetD();
-  $$('.side').forEach((el,i)=>el.onclick=()=>{ ac(); const now=performance.now(); if(D.run&&D.active!==i){ D.rem[D.active]=D.end-now; D.active=i; D.end=now+D.rem[i]; tick(0.2); } else if(!D.run){ D.active=i; D.run=true; D.end=now+D.rem[i]; } });
-  M.timer={ show:paint, busy:()=>false, pauseIfRunning(){ cancelAuto(); if(st.mode!=='duel'){ if(TS.run){ TS.rem=TS.end-performance.now(); TS.run=false; drawS(); } } else if(D.run) pauseD(); },
+  $$('.side').forEach((el,i)=>el.onclick=()=>{ ac(); const now=performance.now(); if(D.run&&D.active!==i){ D.rem[D.active]=D.end-now; D.active=i; D.end=now+D.rem[i]; tick(0.2); } else if(!D.run){ D.active=i; D.run=true; D.end=now+D.rem[i]; VIBE.onTimer('start',{musicOK:false}); } });
+  M.timer={ show:paint, busy:()=>false, _test:{ skipTo(ms){ if(TS.run) TS.end=performance.now()+ms; else TS.rem=ms; }, ts:()=>TS, musicOK }, pauseIfRunning(){ cancelAuto(); if(st.mode!=='duel'){ if(TS.run){ TS.rem=TS.end-performance.now(); TS.run=false; VIBE.onTimer('pause'); drawS(); } } else if(D.run) pauseD(); },
     key(e){ const single=st.mode!=='duel';
       if([' ','PageDown','ArrowRight'].includes(e.key)){ single?toggleS():swapD(); return true; }
       if(e.key==='Enter'&&!single){ pauseD(); return true; }
       if(e.key==='r'||e.key==='R'){ single?resetS():resetD(); return true; }
       if(single&&(e.key==='n'||e.key==='N')){ stepAny(1); return true; } if(single&&(e.key==='b'||e.key==='B')){ stepAny(-1); return true; }
-      if(single&&(e.key==='ArrowUp'||e.key==='ArrowDown')){ const d=(e.key==='ArrowUp'?30000:-30000); if(TS.run){ TS.end+=d; } else { TS.rem=Math.max(1000,TS.rem+d); } TS.total=Math.max(TS.total+d,1000); if(!TS.run&&!TS.over&&st.mode==='single') st.secs=Math.round(TS.rem/1000),save(); return true; }
+      if(single&&(e.key==='ArrowUp'||e.key==='ArrowDown')){ const d=(e.key==='ArrowUp'?30000:-30000); if(TS.run){ TS.end+=d; } else { TS.rem=Math.max(1000,TS.rem+d); } TS.total=Math.max(TS.total+d,1000); if(!TS.run&&!TS.over&&st.mode==='single') st.secs=Math.round(TS.rem/1000),save();
+        if(TS.run&&(TS.sprinted||TS.sprintPre)&&st.sprint>0&&TS.end-performance.now()>st.sprint*60000+30000){ TS.sprinted=false; TS.sprintPre=false; TS.sprintSoon=false; VIBE.onTimer('unsprint'); } return true; }
       return false; } };
 })();
 
@@ -2807,35 +2953,34 @@ const EV=(function(){
   let CD={run:false,end:0,rem:st.cd*60000,total:st.cd*60000,over:false};
   const fmt=ms=>{ const s=Math.ceil(Math.max(0,ms)/1000); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); };
   function resetCd(){ CD={run:false,end:0,rem:st.cd*60000,total:st.cd*60000,over:false}; drawCd(); }
-  function toggleCd(){ if(st.cd<=0){ toast(T('倒數是 0，先在面板設定分鐘')); return; } ac(); if(CD.over) resetCd(); if(CD.run){ CD.rem=CD.end-performance.now(); CD.run=false; } else { CD.end=performance.now()+CD.rem; CD.run=true; } drawCd(); }
+  function toggleCd(){ if(st.cd<=0){ toast(T('倒數是 0，先在面板設定分鐘')); return; } ac(); if(CD.over) resetCd(); if(CD.run){ CD.rem=CD.end-performance.now(); CD.run=false; } else { CD.end=performance.now()+CD.rem; CD.run=true; } drawCd(); paintKeyHint(); }
   function drawCd(){ const box=$('#vbCd'); box.classList.toggle('on',st.cd>0); box.closest('.view').classList.toggle('hasCd',st.cd>0); if(st.cd<=0) return; const rem=CD.run?CD.end-performance.now():CD.rem;
-    if(CD.run&&rem<=0&&!CD.over){ CD.over=true; CD.run=false; CD.rem=0; play('chime',{gain:1}); VIBE.stop(2.5,false); }
+    if(CD.run&&rem<=0&&!CD.over){ CD.over=true; CD.run=false; CD.rem=0; play('chime',{gain:1}); VIBE.onLobbyEnd(); }
     box.classList.toggle('hot',CD.run&&rem>0&&rem<=10000); box.classList.toggle('over',CD.over);
     $('#vbCdTime').textContent=fmt(rem); $('#vbCdState').textContent=CD.over?T('時間到'):CD.run?'':(CD.rem<CD.total?T('暫停中 · Enter 繼續'):T('按 Enter 開始倒數')); }
   /* the projector line shows only the mood name; track titles, states and errors stay in the panel and the pill */
-  function drawNow(){ const el=$('#vbNow'); el.textContent=VIBE.status==='ready'?VIBE.moodName(VIBE.cur?VIBE.cur.mood:VIBE.curMood()):''; }
+  function drawNow(){ const el=$('#vbNow'); el.textContent=VIBE.status==='ready'?VIBE.moodName(VIBE.lobbyMood()):''; }
   function loop(){ if(inView||CD.run){ drawCd(); } requestAnimationFrame(loop); } requestAnimationFrame(loop);
   function stageText(){ $('#vbText').textContent=st.text||T('歡迎'); $('#vbSub').textContent=st.sub||''; }
   function panel(){ const none=VIBE.status==='none'; $('#vbMusicCtl').style.display=none?'none':''; $('#vbNone').style.display=none?'':'none';
     const sel=$('#vbMood'); const m=VIBE.curMood(); sel.innerHTML=VIBE_MOODS.map(([k,n])=>`<option value="${k}">${T(n)}${VIBE.status==='ready'&&!VIBE.tracksOf(k).length?T('（沒有曲子）'):''}</option>`).join(''); sel.value=m;
-    const ts=VIBE.tracksOf(m); $('#vbTracks').innerHTML=VIBE.status!=='ready'?'':(ts.length?ts.map(t=>`<div class="t${VIBE.cur&&VIBE.cur.id===t.id?' on':''}" data-id="${esc(t.id)}"><span>${esc(t.title)}</span></div>`).join(''):`<div class="hint">${T('這個情緒還沒有曲子')}</div>`);
+    const dt=VIBE.displayTrack(); const ts=VIBE.tracksOf(m); $('#vbTracks').innerHTML=VIBE.status!=='ready'?'':(ts.length?ts.map(t=>`<div class="t${dt&&dt.id===t.id&&!VIBE.displayPaused()?' on':''}" data-id="${esc(t.id)}"><span>${esc(t.title)}</span></div>`).join(''):`<div class="hint">${T('這個情緒還沒有曲子')}</div>`);
     $$('#vbTracks .t').forEach(d=>d.onclick=()=>VIBE.playTrack(d.dataset.id));
     $('#vbVol').value=st.vol; $('#vbTextIn').value=st.text; $('#vbTextIn').placeholder=T('歡迎'); $('#vbSubIn').value=st.sub; $('#vbCdMin').value=st.cd; $('#vbAuto').checked=st.auto; $('#vbFollow').checked=st.follow;
     $('#vbSrc').textContent=VIBE.status==='ready'&&VIBE.srcKind==='online'?T('音樂來自線上版，需要網路'):VIBE.status==='loading'?T('載入音樂中…'):''; $('#vbPill').title=T('配樂（P）');
   }
-  function paintMap(){ $('#vbMap').innerHTML=THEMES.map(([v,n])=>`<label class="row"><span class="h">${n}</span><select data-th="${v}">${VIBE_MOODS.map(([k,mn])=>`<option value="${k}"${VIBE.mapFor(v)===k?' selected':''}>${T(mn)}</option>`).join('')}</select></label>`).join('');
+  function paintMap(){ $('#vbMap').innerHTML=THEMES.map(([v,n])=>`<label class="row"><span class="h">${n}</span><select data-th="${v}">${VIBE_MAP_MOODS.map(([k,mn])=>`<option value="${k}"${VIBE.mapFor(v)===k?' selected':''}>${T(mn)}</option>`).join('')}</select></label>`).join('')+`<div class="hint">${T('歌曲與衝刺不在對照表裡，要用時在上方情緒選單自己選。')}</div>`;
     $$('#vbMap select').forEach(s=>s.onchange=()=>{ st.map[s.dataset.th]=s.value; save(); if(!VIBE.playing&&st.follow&&s.dataset.th===S().theme){ st.mood=s.value; save(); panel(); drawNow(); } }); }
-  let wantAuto=false; /* entered while the library was still loading (slow network online): auto-play once it is ready */
-  function show(){ const entering=!inView; inView=true; stageText(); drawCd(); panel(); paintMap(); drawNow(); paintKeyHint(); if(entering){ if(VIBE.status==='ready') VIBE.onEnter(); else if(VIBE.status==='loading') wantAuto=true; } }
-  VIBE.on(()=>{ if(wantAuto&&VIBE.status!=='loading'){ wantAuto=false; if(inView&&VIBE.status==='ready') VIBE.onEnter(); } if(inView){ panel(); drawNow(); } paintKeyHint(); });
-  $('#vbMood').onchange=e=>{ st.mood=e.target.value; save(); panel(); drawNow(); if(VIBE.playing) VIBE.playMood(st.mood,'user'); };
+  function show(){ const entering=!inView; inView=true; stageText(); drawCd(); panel(); paintMap(); drawNow(); paintKeyHint(); if(entering) VIBE.onEnter(); }
+  VIBE.on(()=>{ if(inView){ panel(); drawNow(); } paintKeyHint(); });
+  $('#vbMood').onchange=e=>{ VIBE.setMood(e.target.value); panel(); drawNow(); };
   $('#vbPlay').onclick=()=>VIBE.toggle(); $('#vbNext').onclick=()=>VIBE.next();
-  $('#vbVol').oninput=e=>{ st.vol=+e.target.value; save(); VIBE.applyVolume(); };
+  $('#vbVol').oninput=e=>{ st.vol=+e.target.value; save(); };
   $('#vbTextIn').oninput=e=>{ st.text=e.target.value; save(); stageText(); }; $('#vbSubIn').oninput=e=>{ st.sub=e.target.value; save(); stageText(); };
   $('#vbCdMin').onchange=e=>{ st.cd=clamp(parseInt(e.target.value)||0,0,180); save(); resetCd(); paintKeyHint(); };
   $('#vbCdGo').onclick=toggleCd; $('#vbCdReset').onclick=resetCd;
   $('#vbAuto').onchange=e=>{ st.auto=e.target.checked; save(); }; $('#vbFollow').onchange=e=>{ st.follow=e.target.checked; save(); };
-  M.vibe={ show, hide(){ inView=false; VIBE.clearStop(); }, busy:()=>false,
+  M.vibe={ show, hide(){ inView=false; VIBE.onLeave(); }, busy:()=>false, cdRunning:()=>CD.run,
     key(e){ if(e.key===' '){ VIBE.toggle(); return true; } if(e.key==='Enter'){ toggleCd(); return true; } if(e.key==='r'||e.key==='R'){ resetCd(); return true; } return false; } };
 })();
 
@@ -2886,7 +3031,7 @@ function refreshAll(){ M[cur]&&M[cur].show&&M[cur].show(); }
 function bindS(id,key,kind,after){ const el=$('#'+id); if(kind==='check'){ el.checked=S()[key]; el.onchange=()=>{ S()[key]=el.checked; save(); after&&after(); }; } else { el.value=S()[key]; el.oninput=()=>{ S()[key]=kind==='num'?+el.value:el.value; save(); after&&after(); }; } }
 bindS('duration','duration','num',()=>$('#durLbl').textContent=S().duration); bindS('mystery','mystery','check'); bindS('suspense','suspense','num',()=>$('#susLbl').textContent=S().suspense);
 bindS('showCounter','showCounter','check',refreshAll); bindS('tapOpt','tap','check'); bindS('curtainOpt','curtain','check'); bindS('ambienceOpt','ambience',null,()=>AMB.setMode(S().ambience)); AMB.setMode(S().ambience); bindS('lightsOpt','lights','check'); bindS('effect','effect'); bindS('fireworks','fireworks','check');
-bindS('sound','sound','check',()=>{ if(ctx) master.gain.value=S().sound?S().volume:0; VIBE.applyVolume(); }); bindS('volume','volume','num',()=>{ if(ctx) master.gain.value=S().sound?S().volume:0; });
+bindS('sound','sound','check',()=>{ if(ctx) master.gain.value=S().sound?S().volume:0; }); bindS('volume','volume','num',()=>{ if(ctx) master.gain.value=S().sound?S().volume:0; });
 bindS('tick','tick','check'); bindS('drum','drum','check'); bindS('fanfare','fanfare','check'); bindS('applause','applause','check');
 $('#durLbl').textContent=S().duration; $('#susLbl').textContent=S().suspense;
 $('#testSound').onclick=async()=>{ ac(); await getBuf('tick'); let i=0; const iv=setInterval(()=>{ tick(1-i/14); if(++i>14) clearInterval(iv); },85); await wait(1300); await suspense(1.2); celebrate('big'); };
@@ -2942,7 +3087,7 @@ document.addEventListener('keydown',e0=>{
   if(e.key==='?'){ $('#help').classList.add('show'); return; }
   if(e.code==='KeyE'||e.key==='e'||e.key==='E'){ if(e.shiftKey){ if(MS('reels').ev.active){ EV.clear(); toast(T('已清除事件橫幅')); } } else EV.trigger(); return; }
   if((e.key==='t'||e.key==='T')&&!busyAny()){ const i=THEMES.findIndex(x=>x[0]===S().theme); S().theme=THEMES[(i+1)%THEMES.length][0]; save(); applyTheme(); toast(T('主題：')+THEMES[(i+1)%THEMES.length][1]); ac(); play('chime',{gain:.6}); return; }
-  if(e.key==='m'||e.key==='M'){ S().sound=!S().sound; $('#sound').checked=S().sound; if(ctx) master.gain.value=S().sound?S().volume:0; VIBE.applyVolume(); save(); toast(S().sound?T('音效開啟'):T('已靜音')); return; }
+  if(e.key==='m'||e.key==='M'){ S().sound=!S().sound; $('#sound').checked=S().sound; if(ctx) master.gain.value=S().sound?S().volume:0; save(); toast(S().sound?T('音效開啟'):T('已靜音')); return; }
   if(e.key==='p'||e.key==='P'){ if(e.shiftKey) VIBE.next(); else VIBE.toggle(); paintKeyHint(); return; }
   if(e.key==='['||e.key===']'){ const i=MODS.findIndex(m=>m.id===cur); switchMod(MODS[(i+(e.key===']'?1:MODS.length-1))%MODS.length].id); if(document.body.classList.contains('classmode')) pokeDock(); return; }
   if(document.activeElement.tagName==='BUTTON' && (e.key===' '||e.key==='Enter')) document.activeElement.blur();
@@ -2954,7 +3099,7 @@ document.addEventListener('keydown',e0=>{
    ========================================================= */
 window.__T={state:()=>state,M,switchMod,cls,SND,pack,sndPack,srcOf,EV,DECKS,DECKS_EN,DECKS_V1,INCOMPAT,VIBE};
 document.addEventListener('change',e=>{ if(e.target.tagName==='SELECT') e.target.blur(); });
-renderClasses(); fillTA(); applyTheme(); EV.init(); switchMod(cur);
+renderClasses(); fillTA(); applyTheme(); EV.init(); switchMod(cur); BOOTED=true;
 })();
 </script>
 </body>

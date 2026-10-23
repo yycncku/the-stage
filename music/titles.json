@@ -1,0 +1,176 @@
+{
+ "finale/a-new-dawn~2.m4a": {
+  "title": "A New Dawn",
+  "version": 2,
+  "vocal": false,
+  "endLoud": 203.9
+ },
+ "finale/a-new-dawn~1.m4a": {
+  "title": "A New Dawn",
+  "version": 1,
+  "vocal": false,
+  "endLoud": 206.2
+ },
+ "songs/build-it-up~2.m4a": {
+  "title": "Build It Up",
+  "version": 2,
+  "vocal": true,
+  "endLoud": 223.0
+ },
+ "songs/build-it-up~1.m4a": {
+  "title": "Build It Up",
+  "version": 1,
+  "vocal": true,
+  "endLoud": 236.4
+ },
+ "night/cosmic-shimmer~2.m4a": {
+  "title": "Cosmic Shimmer",
+  "version": 2,
+  "vocal": false,
+  "endLoud": 325.2
+ },
+ "night/cosmic-shimmer~1.m4a": {
+  "title": "Cosmic Shimmer",
+  "version": 1,
+  "vocal": false,
+  "endLoud": 328.0
+ },
+ "night/deep-space-arpeggios~2.m4a": {
+  "title": "Deep Space Arpeggios",
+  "version": 2,
+  "vocal": false,
+  "endLoud": 326.2
+ },
+ "night/deep-space-arpeggios~1.m4a": {
+  "title": "Deep Space Arpeggios",
+  "version": 1,
+  "vocal": false,
+  "endLoud": 329.0
+ },
+ "warm/everyday-wonder~1.m4a": {
+  "title": "Everyday Wonder",
+  "version": 1,
+  "vocal": false,
+  "endLoud": 236.3
+ },
+ "sprint/final-deadline~2.m4a": {
+  "title": "Final Deadline",
+  "version": 2,
+  "vocal": false,
+  "endLoud": 223.9
+ },
+ "sprint/final-deadline~1.m4a": {
+  "title": "Final Deadline",
+  "version": 1,
+  "vocal": false,
+  "endLoud": 184.7
+ },
+ "think/focado-e-calmo~2.m4a": {
+  "title": "Focado e Calmo",
+  "version": 2,
+  "vocal": false,
+  "endLoud": 415.7
+ },
+ "think/focado-e-calmo~1.m4a": {
+  "title": "Focado e Calmo",
+  "version": 1,
+  "vocal": false,
+  "endLoud": 418.3
+ },
+ "warm/laid-back-lounge~1.m4a": {
+  "title": "Laid-Back Lounge",
+  "version": 1,
+  "vocal": false,
+  "endLoud": 233.3
+ },
+ "lift/leap-of-tomorrow~1.m4a": {
+  "title": "Leap Of Tomorrow",
+  "version": 1,
+  "vocal": false,
+  "endLoud": 127.6
+ },
+ "lift/step-into-dawn~2.m4a": {
+  "title": "Step Into Dawn",
+  "version": 2,
+  "vocal": false,
+  "endLoud": 214.3
+ },
+ "lift/step-into-dawn~1.m4a": {
+  "title": "Step Into Dawn",
+  "version": 1,
+  "vocal": false,
+  "endLoud": 228.0
+ },
+ "night/vector-horizon~2.m4a": {
+  "title": "Vector Horizon",
+  "version": 2,
+  "vocal": false,
+  "endLoud": 221.9
+ },
+ "night/vector-horizon~1.m4a": {
+  "title": "Vector Horizon",
+  "version": 1,
+  "vocal": false,
+  "endLoud": 242.4
+ },
+ "think/warm-rain-lo-fi~2.m4a": {
+  "title": "Warm Rain Lo-fi",
+  "version": 2,
+  "vocal": false,
+  "endLoud": 410.5
+ },
+ "think/warm-rain-lo-fi~1.m4a": {
+  "title": "Warm Rain Lo-fi",
+  "version": 1,
+  "vocal": false,
+  "endLoud": 415.6
+ },
+ "songs/t9204a8~2.m4a": {
+  "title": "まだ、ここから",
+  "version": 2,
+  "vocal": true,
+  "endLoud": 270.8
+ },
+ "songs/t9204a8~1.m4a": {
+  "title": "まだ、ここから",
+  "version": 1,
+  "vocal": true,
+  "endLoud": 267.2
+ },
+ "day/t642409~2.m4a": {
+  "title": "明るい冒険",
+  "version": 2,
+  "vocal": false,
+  "endLoud": 236.0
+ },
+ "day/t642409~3.m4a": {
+  "title": "明るい冒険",
+  "version": 3,
+  "vocal": false,
+  "endLoud": 237.2
+ },
+ "day/t642409~1.m4a": {
+  "title": "明るい冒険",
+  "version": 1,
+  "vocal": false,
+  "endLoud": 236.6
+ },
+ "lift/t620711~2.m4a": {
+  "title": "밝은 아침의 약속",
+  "version": 2,
+  "vocal": false,
+  "endLoud": 206.9
+ },
+ "lift/t620711~1.m4a": {
+  "title": "밝은 아침의 약속",
+  "version": 1,
+  "vocal": false,
+  "endLoud": 204.7
+ },
+ "lift/tc48b6e~1.m4a": {
+  "title": "새날의 시작",
+  "version": 1,
+  "vocal": false,
+  "endLoud": 137.0
+ }
+}
