@@ -63,7 +63,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:8px 14px}
 button:hover{border-color:var(--ink-3)}
 button:disabled,input:disabled,select:disabled{opacity:.45;cursor:default}
-label.row:has(input:disabled)>.h{opacity:.45}
+label.row:has(input:disabled,select:disabled)>.h{opacity:.45}
+#tMood,#tTrack{width:170px}
+.ctl[data-mod="timer"] .btnrow+label.row{margin-top:8px}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 button.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:700}
 button.danger{background:transparent;border-color:var(--danger);color:var(--danger)}
@@ -281,7 +283,10 @@ body.classmode #tRingWrap{width:min(78vmin,calc(100vh - 150px))}
 #tRing .bg{stroke:var(--panel-2)}
 #tRing .fg{stroke:var(--accent);stroke-linecap:round;transition:stroke .3s}
 #tDigits{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-#tTime{font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:19cqw;letter-spacing:.01em;line-height:1}
+#tTimeRow{position:relative} /* MM:SS stays centred in the ring; the milliseconds hang off its right edge and never shift it */
+#tTime{font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:17cqw;letter-spacing:.01em;line-height:1}
+#tMs{position:absolute;left:100%;bottom:.06em;margin-left:.06em;font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:6cqw;color:var(--ink-2);line-height:1;white-space:nowrap}
+.hot #tMs{color:var(--danger)}
 #tState{color:var(--ink-2);font-size:clamp(14px,2.2vmin,22px);margin-top:10px;letter-spacing:.1em}
 .hot #tTime{color:var(--danger);animation:beat 1s steps(1) infinite}
 .hot #tRing .fg{stroke:var(--danger)}
@@ -484,7 +489,7 @@ body.classmode #vbPill{font-size:clamp(12px,1.4vmin,16px);opacity:.65}
           <div id="tNow" class="vtitle" style="min-height:1.2em"></div>
           <div id="tRingWrap">
             <svg id="tRing" viewBox="0 0 200 200"><circle class="bg" cx="100" cy="100" r="92"/><circle class="fg" id="tArc" cx="100" cy="100" r="92" stroke-dasharray="578.05" stroke-dashoffset="0"/></svg>
-            <div id="tDigits"><div id="tTime">03:00</div><div id="tState">按空白鍵開始</div></div>
+            <div id="tDigits"><div id="tTimeRow"><div id="tTime">03:00</div><div id="tMs">.000</div></div><div id="tState">按空白鍵開始</div></div>
           </div>
           <div id="tPresets"></div>
           <div id="tNext" class="vsub" style="margin:10px 0 0"></div>
@@ -588,6 +593,7 @@ body.classmode #vbPill{font-size:clamp(12px,1.4vmin,16px);opacity:.65}
           <div id="tSingleCtl">
             <label class="row"><span class="h">時間（分:秒）</span><span><input type="number" id="tMin" min="0" max="180" style="width:64px"> : <input type="number" id="tSec" min="0" max="59" style="width:64px"></span></label>
             <label class="row"><span class="h">剩餘幾秒時提醒</span><input type="number" id="tWarn" min="0" max="600"></label>
+            <label class="row" id="tMsRow"><span class="h">顯示毫秒（三分鐘內的計時）</span><input type="checkbox" id="tMsOpt"></label>
             <label class="row"><span class="h">顯示報告順序（來自抽籤）</span><input type="checkbox" id="tUseQ"></label>
             <div class="btnrow"><button class="sm" id="tPrevP">上一位（B）</button><button class="sm" id="tNextP">下一位（N）</button></div>
           </div>
@@ -604,9 +610,13 @@ body.classmode #vbPill{font-size:clamp(12px,1.4vmin,16px);opacity:.65}
             <label class="row"><span class="h">每方時間（秒）</span><input type="number" id="tDuelSecs" min="10" max="3600"></label>
           </div>
           <div class="btnrow"><button class="primary" id="tGo">開始／暫停</button><button class="sm" id="tReset">重設</button></div>
-          <label class="row" id="tMusicRow"><span class="h">開始計時時自動播「思考」配樂</span><input type="checkbox" id="tMusic"></label>
+          <label class="row" id="tMusicRow"><span class="h">計時時自動播配樂</span><input type="checkbox" id="tMusic"></label>
+          <label class="row" id="tMoodRow"><span class="h">情緒</span><select id="tMood"></select></label>
+          <label class="row" id="tTrackRow"><span class="h">曲子</span><select id="tTrack"></select></label>
+          <label class="row" id="tAlignRow"><span class="h">曲子結尾對準歸零</span><input type="checkbox" id="tAlign"></label>
           <label class="row" id="tSprintRow"><span class="h">最後幾分鐘換「衝刺」配樂（0 = 不換）</span><input type="number" id="tSprint" min="0" max="30" style="width:64px"></label>
-          <div class="hint">空白鍵：開始／暫停（雙計時為換方）· Enter：雙計時暫停 · ↑↓：±30 秒 · R：重設。最後 10 秒逐秒提示，時間到會敲鑼並轉為超時計時。開了自動配樂時，思考／衝刺配樂在歸零時收掉；你自己選的其他配樂不受影響。時間軸裡行尾加 ♪ 的段落才配樂；報告序列與辯論不配樂。計時不到 2N+1 分鐘（N=2 時 5 分鐘）不換衝刺。</div>
+          <div class="hint">最後 10 秒逐秒提示，時間到會敲鑼並轉為超時計時。</div>
+          <details><summary class="hint" style="cursor:pointer">配樂怎麼配</summary><div class="hint">開了自動配樂，計時配樂在歸零時收掉；你自己選的配樂不動。時間軸只有行尾 ♪ 的段落配樂；報告序列與辯論不配樂。「曲子結尾對準歸零」只對比曲子短的計時有效。配樂選「思考」且計時至少 5 分鐘（N=2 時）才會在最後 N 分鐘換衝刺。</div></details>
         </div>
         <!-- vibe -->
         <div class="ctl" data-mod="vibe">
@@ -1689,18 +1699,20 @@ const EN={
 '點名':'Wheel','分組':'Groups','抽籤':'Draw','抽卡':'Slots','計時':'Timer','氛圍':'Vibe',
 /* vibe */
 '暖場':'Warm-up','提振':'Boost','思考':'Focus','終場':'Finale','夜空':'Night Sky','日光':'Daylight','歌曲':'Songs','衝刺':'Sprint','配樂':'Music','曲目':'Tracks',
+'計時時自動播配樂':'Auto-play music while timing','曲子':'Track','隨機':'Random','曲子結尾對準歸零':'End the track on zero','顯示毫秒（三分鐘內的計時）':'Show milliseconds (timers up to 3 min)','配樂怎麼配':'How music is picked',
+'最後 10 秒逐秒提示，時間到會敲鑼並轉為超時計時。':'Per-second cues in the last 10 s; a gong at zero, then overtime counts up.',
+'開了自動配樂，計時配樂在歸零時收掉；你自己選的配樂不動。時間軸只有行尾 ♪ 的段落配樂；報告序列與辯論不配樂。「曲子結尾對準歸零」只對比曲子短的計時有效。配樂選「思考」且計時至少 5 分鐘（N=2 時）才會在最後 N 分鐘換衝刺。':'With auto music on, the timer music stops at zero; music you picked stays. In the agenda only lines ending with ♪ get music; presenter queues and debates get none. “End the track on zero” only works when the timer is shorter than the track. Sprint kicks in for the last N minutes only when the music is Focus and the timer is at least 5 minutes (with N = 2).',
 '最後幾分鐘換「衝刺」配樂（0 = 不換）':'“Sprint” music for the last N min (0 = off)','載入中…':'Loading…','報告序列開著，不配樂（計時面板可關）':'Presenter queue is on — no music (turn it off in the timer panel)','暫停倒數':'Pause countdown',
 '每行一段：段落名稱 分鐘。行尾加 ♪ 這段才配樂（例：小組討論 15 ♪）':'One segment per line: name minutes. End a line with ♪ to give it music (e.g. Group discussion 15 ♪)',
 '倒數歸零時響一聲；自動播的音樂淡出，你自己選的照播。0 = 不顯示倒數。':'A chime at zero; auto-played music fades out, music you picked keeps playing. 0 = no countdown.','最後 {} 分鐘':'Last {} minutes','配樂照舊：{}':'Keeping the music: {}','載入失敗':'Could not load','這個情緒的曲子都載不到':'None of this mood’s tracks could be loaded',
 '歌曲與衝刺不在對照表裡，要用時在上方情緒選單自己選。':'Songs and Sprint are not in this table; pick them from the mood menu above.',
-'空白鍵：開始／暫停（雙計時為換方）· Enter：雙計時暫停 · ↑↓：±30 秒 · R：重設。最後 10 秒逐秒提示，時間到會敲鑼並轉為超時計時。開了自動配樂時，思考／衝刺配樂在歸零時收掉；你自己選的其他配樂不受影響。時間軸裡行尾加 ♪ 的段落才配樂；報告序列與辯論不配樂。計時不到 2N+1 分鐘（N=2 時 5 分鐘）不換衝刺。':'Space: start / pause (dual: switch side) · Enter: pause dual · ↑↓: ±30 s · R: reset. Per-second cues in the last 10 s; a gong at zero, then overtime counts up. With auto music on, Focus / Sprint music stops at zero; music you picked yourself is left alone. In the agenda only lines ending with ♪ get music; presenter queues and debates get none. Sprint needs a timer of at least 2N+1 minutes (5 min when N = 2).',
 '情緒':'Mood','播放／暫停':'Play / Pause','下一首（Shift+P）':'Next (Shift+P)','音樂音量':'Music volume','大廳畫面':'Lobby screen','大字':'Headline','小字':'Second line',
 '倒數（分）':'Countdown (min)','開始倒數（Enter）':'Start countdown (Enter)','重設倒數（R）':'Reset countdown (R)',
 '連動':'Automation','切進「氛圍」時自動播放':'Auto-play on entering Vibe','換主題時跟著換情緒':'Follow the theme’s default mood','主題 → 預設情緒':'Theme → default mood',
 '沒有音樂：這個檔案旁沒有 music 資料夾，也連不上線上版。大廳畫面照常可用。':'No music: no music/ folder next to this file and the online copy is unreachable. The lobby screen still works.',
 '倒數是 0，先在面板設定分鐘':'Countdown is 0 — set minutes in the panel first','音樂來自線上版，需要網路':'Music comes from the online copy and needs a connection','（沒有曲子）':'(no tracks)','播配樂':'Music on','倒數':'Countdown',
 '音效（鼓聲、揭曉、鑼）播放時音樂會自動壓低。P 在任何畫面都能播放／暫停。':'Music ducks automatically under sound effects (drum roll, reveal, gong). P plays / pauses from any screen.',
-'開始計時時自動播「思考」配樂':'Play “Focus” music when the timer starts','配樂（P）':'Music (P)',
+'配樂（P）':'Music (P)',
 '沒有音樂：這個檔案旁沒有 music 資料夾，也連不上線上版':'No music: no music/ folder next to this file, and the online copy is unreachable','載入音樂中…':'Loading music…',
 '這個情緒還沒有曲子':'No tracks in this mood yet',
 '按 P 開始播放':'Press P to start playback','重設倒數':'Reset countdown','下一首':'Next track','暫停配樂':'Pause music',
@@ -2025,7 +2037,7 @@ const DEF={ lang:'zh', tap:true, theme:'dark', pack:'auto', effect:'confetti', f
   ambience:'on', sound:true, volume:0.8, tick:true, drum:true, fanfare:true, applause:true, curtain:true, lights:true, custom:{} };
 const DEFMOD={ wheel:{source:'students'}, group:{by:'count',n:6,k:4,naming:'num',balance:true,avoid:true,speed:'drama',showTags:false,leader:false},
   order:{mode:'order',source:'groups',custom:'第 1 組\n第 2 組\n第 3 組\n第 4 組\n第 5 組\n第 6 組',roles:'加盟派\n直營派\n決策團隊',last:null},
-  reels:{preset:'creative',decks:null,incompat:null,hist:[],mode:'single',spin:'all',unit:'one',partial:null,assign:[],ev:{preset:'shock',decks:null,scope:'class',respMin:5,pause:false,active:null,log:[]}}, timer:{mode:'single',secs:180,warn:30,a:'正方',b:'反方',duelSecs:120,useQueue:true,qi:0,agenda:'開場 5\n講授 20\n小組討論 15 ♪\n分組報告 10\n總結 5',auto:true,ai:0,music:true,sprint:2},
+  reels:{preset:'creative',decks:null,incompat:null,hist:[],mode:'single',spin:'all',unit:'one',partial:null,assign:[],ev:{preset:'shock',decks:null,scope:'class',respMin:5,pause:false,active:null,log:[]}}, timer:{mode:'single',secs:180,warn:30,a:'正方',b:'反方',duelSecs:120,useQueue:true,qi:0,agenda:'開場 5\n講授 20\n小組討論 15 ♪\n分組報告 10\n總結 5',auto:true,ai:0,music:true,sprint:2,mMood:'think',mTrack:'',align:true,ms:true},
   vibe:{mood:'',text:'',sub:'',cd:10,vol:0.6,auto:true,follow:true,map:{}} };
 let state=load();
 function load(){
@@ -2044,7 +2056,7 @@ function normalize(s){
     if(!Array.isArray(ev.log)) ev.log=[]; ev.log=ev.log.filter(l=>l&&Array.isArray(l.items)&&l.items.length); if(!EV_DECKS[ev.preset]) ev.preset='shock'; if(!['class','group'].includes(ev.scope)) ev.scope='class'; ev.respMin=clamp(parseInt(ev.respMin)||0,0,120); ev.pause=!!ev.pause;
     if(ev.active&&!(Array.isArray(ev.active.items)&&ev.active.items.length&&['class','group'].includes(ev.active.scope))) ev.active=null; }
   delete s.mod.vote; delete s.mod.invest; /* modules retired 2026-10 */
-  { const tm=s.mod.timer; if(tm.agenda==='開場 5\n講授 20\n小組討論 15\n分組報告 10\n總結 5') tm.agenda='開場 5\n講授 20\n小組討論 15 ♪\n分組報告 10\n總結 5'; if(tm.agenda==='Opening 5\nLecture 20\nGroup discussion 15\nPresentations 10\nWrap-up 5') tm.agenda='Opening 5\nLecture 20\nGroup discussion 15 ♪\nPresentations 10\nWrap-up 5'; tm.sprint=clamp(parseInt(tm.sprint)||0,0,30); if(isNaN(tm.sprint)) tm.sprint=2; }
+  { const tm=s.mod.timer; if(tm.agenda==='開場 5\n講授 20\n小組討論 15\n分組報告 10\n總結 5') tm.agenda='開場 5\n講授 20\n小組討論 15 ♪\n分組報告 10\n總結 5'; if(tm.agenda==='Opening 5\nLecture 20\nGroup discussion 15\nPresentations 10\nWrap-up 5') tm.agenda='Opening 5\nLecture 20\nGroup discussion 15 ♪\nPresentations 10\nWrap-up 5'; tm.sprint=clamp(parseInt(tm.sprint)||0,0,30); if(isNaN(tm.sprint)) tm.sprint=2; if(!['warm','lift','think','finale','night','day','songs','sprint'].includes(tm.mMood)) tm.mMood='think'; if(typeof tm.mTrack!=='string') tm.mTrack=''; tm.align=tm.align!==false; tm.ms=tm.ms!==false; }
   { const vb=s.mod.vibe; if(!vb.map||typeof vb.map!=='object') vb.map={}; vb.vol=clamp(parseFloat(vb.vol),0,1); if(isNaN(vb.vol)) vb.vol=0.6; vb.cd=clamp(parseInt(vb.cd)||0,0,180); if(typeof vb.text!=='string') vb.text=''; if(typeof vb.sub!=='string') vb.sub=''; if(typeof vb.mood!=='string') vb.mood=''; }
   s.ui=s.ui||{mod:'wheel'}; if(!DEFMOD[s.ui.mod]) s.ui.mod='wheel';
   if(!s.classes||!s.classes.length) s.classes=[{id:uid(),name:T('我的班級'),names:[]}];
@@ -2190,7 +2202,7 @@ const VIBE=(()=>{
     const vers=tracksOf(m).filter(t=>t.title===title); const k=m+'|'+title; verAlt[k]=((verAlt[k]||0)+1)%vers.length; return vers[verAlt[k]]; }
   function unpick(t){ if(!t) return; rounds[t.mood]=rounds[t.mood]||[]; if(!rounds[t.mood].includes(t.title)) rounds[t.mood].unshift(t.title); const k=t.mood+'|'+t.title; const n=tracksOf(t.mood).filter(x=>x.title===t.title).length; verAlt[k]=((verAlt[k]||0)-1+n)%n; }
   function wantMoodAfter(t){ /* which mood follows a finished track t; null = stop */
-    if(owner==='timer'&&t&&(t.mood==='think'||t.mood==='sprint')) return t.mood;
+    if(owner==='timer'&&t) return t.mood; /* a timed task stays in its own mood */
     let m=(owner==='user'||owner==='lobby')?curMood():(t?t.mood:curMood());
     if(t&&titlesOf(m).length===1){ m=(t.mood===m)?(m in VIBE_FALLBACK?VIBE_FALLBACK[m]:'warm'):t.mood; } /* single-title mood: play it once, then stay in the fallback */
     return m; }
@@ -2199,7 +2211,7 @@ const VIBE=(()=>{
     if(queued){ unpick(queued); queued=null; }
     return pick(m,avoid); }
   function preloadNext(){ const x=A[ai^1]; if(!x.paused) return; let t=null;
-    if(owner==='timer'&&cur&&cur.mood==='think'&&sprintArmed){ if(!sprintTrack) sprintTrack=pick('sprint',null); t=sprintTrack; } /* the sprint track is what comes next in a timed task */
+    if(owner==='timer'&&cur&&cur.mood===timerMood&&timerMood!=='sprint'&&sprintArmed){ if(!sprintTrack) sprintTrack=pick('sprint',null); t=sprintTrack; } /* the sprint track is what comes next in a timed task */
     else t=nextAfter(cur);
     if(t){ x.src=base+t.file; x.load(); queued=t; } }
   /* ---------- volume ticker: fade, duck, last-10-seconds, mute, slider; completes by elapsed time; instant when hidden ---------- */
@@ -2220,22 +2232,24 @@ const VIBE=(()=>{
   function guard(){ A.forEach((x,i)=>{ if(i!==ai){ if(!x.paused) x.pause(); x.volume=0; } }); if(state==='idle'||state==='paused'||state==='blocked'){ const x=el(); if(!x.paused&&state!=='blocked'){ x.volume=0; x.pause(); } } console.assert(_audible()<=1,'VIBE: two audible elements'); }
   function _audible(){ return A.filter(x=>!x.paused&&x.volume>0&&!x.ended&&x.readyState>=3).length; }
   function setState(s,t){ state=s; target=t||null; guard(); emit(); }
-  function startTrack(t,{fadeIn=0.8,why=null,offset=0,deadline=10000}={}){ if(!t) return false; const g=bump(); loadFail=false; bufferingSince=0;
+  function startTrack(t,{fadeIn=0.8,why=null,offset=0,deadline=10000,alignTo=0}={}){ if(!t) return false; const g=bump(); loadFail=false; bufferingSince=0;
+    let aligned=false; if(alignTo>0){ const endAt=t.endLoud||((t.dur||0)-1.0); if(endAt>alignTo+0.5){ offset=Math.max(0,endAt-alignTo-0.25); aligned=true; } } /* land the music's last strong beat on zero */
     const other=A[ai^1]; const reuse=other.src&&other.src.endsWith(encodeURI(t.file).replace(/^\.\//,''))||(queued&&queued.id===t.id&&other.src);
     const prev=el(); if(!prev.paused){ prev.volume=0; prev.pause(); }
     ai^=1; const x=el(); if(!reuse){ x.src=base+t.file; x.load(); } queued=null;
     cur=t; if(why) owner=why; if(why==='user') { v().mood=t.mood; save(); } pendingTrack=null; fade=0; endF=1; lastT=0; lastTAt=0; duckF=1; duckAnim=null; duckFloor=1; duckHoldUntil=0;
-    state='playing'; target=null; pend={g,fadeIn,t0:now(),to:setTimeout(()=>{ if(pend&&pend.g===g){ pend=null; x.pause(); toast(T('載入失敗')); const wasSprint=t.mood==='sprint'&&owner==='timer'; cur=null; setState('idle'); if(wasSprint) playMood('think','timer',0.5); } },deadline)};
+    state='playing'; target=null; pend={g,fadeIn,aligned,t0:now(),to:setTimeout(()=>{ if(pend&&pend.g===g){ pend=null; x.pause(); toast(T('載入失敗')); const wasSprint=t.mood==='sprint'&&owner==='timer'; cur=null; setState('idle'); if(wasSprint&&timerMood!=='sprint'){ const tr=timerPick(null); if(tr) startTrack(tr,{fadeIn:0.5,why:'timer'}); } } },deadline)};
     const seek=()=>{ if(g!==gen||x!==el()||cur!==t) return; if(offset>0&&x.readyState>=1){ try{ x.currentTime=Math.min(offset,Math.max(0,(x.duration||t.dur)-5)); }catch(e){} } };
     if(x.readyState>=1) seek(); else x.onloadedmetadata=seek;
     const p=x.play(); if(p&&p.then) p.then(()=>{ if(g!==gen&&x!==el()){ x.pause(); return; } }).catch(err=>{ if(g!==gen) return; const nm=err&&err.name; if(nm==='NotAllowedError'){ clearTimeout(pend&&pend.to); pend=null; setState('blocked'); } else if(nm==='AbortError'){ } else onError(x); });
     if(x.readyState>=3&&!x.paused) onPlaying(x); emit(); return true; }
-  function onPlaying(x){ if(x!==el()||!pend||pend.g!==gen) return; if(cur) fails[cur.mood]=0; const fi=pend.fadeIn; clearTimeout(pend.to); pend=null; bufferingSince=0; noDuckUntil=now()+fi*1000; if(duckF<1&&duckAnim&&duckAnim.to<1){ duckAnim=null; duckF=1; } rampTo(1,fi); preloadNext(); emit(); }
+  function onPlaying(x){ if(x!==el()||!pend||pend.g!==gen) return; if(cur) fails[cur.mood]=0; const fi=pend.fadeIn;
+    if(pend.aligned){ const late=(now()-pend.t0)/1000; if(late>0.15&&late<5){ try{ x.currentTime+=late; }catch(e){} } } /* streaming latency must not push the last beat past zero */ clearTimeout(pend.to); pend=null; bufferingSince=0; noDuckUntil=now()+fi*1000; if(duckF<1&&duckAnim&&duckAnim.to<1){ duckAnim=null; duckF=1; } rampTo(1,fi); preloadNext(); emit(); }
   function onEnded(x){ if(x!==el()||state!=='playing') return; naturalNext(); }
   function onError(x){ if(x!==el()||(state!=='playing'&&state!=='blocked')) return; const m=cur?cur.mood:null; if(m){ fails[m]=(fails[m]||0)+1; if(fails[m]>=tracksOf(m).length){ fails[m]=0; bump(); x.pause(); cur=null; setState('idle'); toast(T('這個情緒的曲子都載不到')); return; } } naturalNext(); }
   function naturalNext(){ const g=bump(); const x=el(); x.pause(); fade=0; const fin=cur; const t=nextAfter(fin);
     if(!t){ cur=null; if(fin&&fin.mood==='songs'&&VIBE_FALLBACK.songs===null){ setState('idle'); } else { setState('idle'); toast(T('這個情緒還沒有曲子')); } return; }
-    if(owner==='timer'&&fin&&fin.mood==='think'&&sprintSoon){ setState('fading',{kind:'next',track:null,wait:'sprint'}); return; }
+    if(owner==='timer'&&fin&&fin.mood===timerMood&&sprintSoon){ setState('fading',{kind:'next',track:null,wait:'sprint'}); return; }
     setState('fading',{kind:'next',track:t}); silenceT=setTimeout(()=>{ if(g!==gen) return; startTrack(t,{fadeIn:0.5,deadline:8000}); },document.hidden?0:400); }
   function fadeTo(kind,secs,track,after){ /* fade the audible element out, then do `after` (track start / pause / stop) */
     const g=bump(); const x=el(); setState('fading',{kind,track}); rampTo(0,secs,()=>{ if(g!==gen) return; x.pause(); after(); }); }
@@ -2282,34 +2296,39 @@ const VIBE=(()=>{
   function onLeave(){ inLobby=false; wantAuto=false; }
   function hold(f){ holdF=f; } /* event overlay: keep music down until the banner closes */
   function onTheme(){ if(v().follow){ v().mood=mapFor(S().theme); save(); emit(); } }
-  let sprintSoon=false, sprintTrack=null;
+  let sprintSoon=false, sprintTrack=null, timerMood='think', timerTrackId='', timerAlign=false, timerTotal=0, timerT0=0;
+  /* the timer's own music: a chosen track, or a random track of the chosen mood; optionally aligned so the music's last strong beat lands on zero */
+  function timerPick(avoid){ const tr=timerTrackId&&lib&&lib.tracks.find(x=>x.id===timerTrackId); return tr||pick(timerMood,avoid); }
+  const timerOpts=(fadeIn)=>({fadeIn,why:'timer',alignTo:timerAlign?Math.max(0,timerTotal-(now()-timerT0)/1000):0});
   function onTimer(ev,info={}){ try{ _onTimer(ev,info); }catch(err){ console.error('VIBE.onTimer',ev,err); } }
   function _onTimer(ev,info={}){ const tm=MS('timer');
-    if(ev==='start'){ endF=1; sprintSoon=false; sprintTrack=null; sprintArmed=!!info.sprintArmed;
+    if(ev==='start'){ endF=1; sprintSoon=false; sprintTrack=null; sprintArmed=!!info.sprintArmed; timerMood=info.mood||'think'; timerTrackId=info.track||''; timerAlign=!!info.align; timerTotal=info.total||0; timerT0=now();
       if(!info.musicOK){ if(info.first&&tm.music&&status==='ready'&&tm.mode==='single'&&info.queue) toast(T('報告序列開著，不配樂（計時面板可關）'));
         if(owner!=='user'){ if(state==='playing'||(state==='fading'&&target&&(target.kind==='track'||target.kind==='next'))) stopNow(0.6); else if(state==='paused'){ el().pause(); cur=null; pendingTrack=null; setState('idle'); } } return; }
       if(!tm.music||status!=='ready') return;
-      if(state==='idle'||state==='blocked'){ playMood('think','timer',1.5); return; }
-      if(state==='paused'){ if(owner==='user'){ if(info.first) toast(t`配樂照舊：${moodName(cur.mood)}`); return; } el().pause(); pendingTrack=null; playMood('think','timer',1.5); return; }
-      if(state==='playing'){ if(owner==='user'){ if(info.first) toast(t`配樂照舊：${moodName(cur.mood)}`); return; } if(owner==='lobby'){ const tr=pick('think',cur.title); if(tr) switchTo(tr,'timer',0.6,1.5); return; } if(cur&&cur.mood==='sprint'){ const tr=pick('think',cur.title); if(tr) switchTo(tr,'timer',0.6,1.0); } return; }
-      if(state==='fading'){ const k=target&&target.kind; if(k==='stop'||((k==='track'||k==='next')&&owner!=='user')){ const tr=pick('think',cur?cur.title:null); if(tr){ bump(); hardMute(()=>startTrack(tr,{fadeIn:1.5,why:'timer'})); } } }
+      const fi=info.total&&info.total<=90?0.3:1.5; /* short countdowns start crisp */
+      const go=()=>{ const tr=timerPick(cur?cur.title:null); if(!tr){ toast(T('這個情緒還沒有曲子')); return false; } return startTrack(tr,timerOpts(fi)); };
+      if(state==='idle'||state==='blocked'){ go(); return; }
+      if(state==='paused'){ if(owner==='user'){ if(info.first) toast(t`配樂照舊：${moodName(cur.mood)}`); return; } el().pause(); pendingTrack=null; go(); return; }
+      if(state==='playing'){ if(owner==='user'){ if(info.first) toast(t`配樂照舊：${moodName(cur.mood)}`); return; } if(owner==='lobby'||(cur&&cur.mood!==timerMood)||(timerTrackId&&cur&&cur.id!==timerTrackId)){ const tr=timerPick(cur.title); if(tr){ const g=bump(); const x=el(); setState('fading',{kind:'track',track:tr}); rampTo(0,0.6,()=>{ if(g!==gen) return; x.pause(); startTrack(tr,timerOpts(fi)); }); } } return; }
+      if(state==='fading'){ const k=target&&target.kind; if(k==='stop'||((k==='track'||k==='next')&&owner!=='user')){ const tr=timerPick(cur?cur.title:null); if(tr){ bump(); hardMute(()=>startTrack(tr,timerOpts(fi))); } } }
       return; }
     if(ev==='pause'){ if(owner!=='timer') return; if(state==='playing') pauseNow(0.4); else if(state==='fading'&&target&&(target.kind==='track'||target.kind==='next')){ const tr=target.track; bump(); hardMute(()=>{ pendingTrack=tr; setState('paused'); }); } return; }
     if(ev==='resume'){ if(owner!=='timer'||state!=='paused') return; if(pendingTrack&&pendingTrack.mood==='sprint'&&sprintSoon){ pendingTrack=null; return; } /* stay silent; the sprint cue starts it at N:00 */ resume(); return; }
     if(ev==='reset'){ endF=1; sprintSoon=false; sprintTrack=null; sprintArmed=false; if(owner!=='timer') return; if(state==='playing') stopNow(0.6); else if(state==='paused'||state==='blocked') stopNow(0); else if(state==='fading'){ bump(); hardMute(()=>{ cur=null; setState('idle'); }); } return; }
-    if(ev==='sprintSoon'){ if(owner==='timer') sprintSoon=true; return; }
-    if(ev==='sprintPre'){ if(owner!=='timer'||!cur||cur.mood!=='think') return; if(!sprintTrack) sprintTrack=(queued&&queued.mood==='sprint')?queued:pick('sprint',null); if(!sprintTrack) return; sprintSoon=true;
+    if(ev==='sprintSoon'){ if(owner==='timer'&&sprintArmed) sprintSoon=true; return; }
+    if(ev==='sprintPre'){ if(owner!=='timer'||!sprintArmed||!cur||cur.mood!==timerMood||timerMood==='sprint') return; if(!sprintTrack) sprintTrack=(queued&&queued.mood==='sprint')?queued:pick('sprint',null); if(!sprintTrack) return; sprintSoon=true;
       if(state==='playing'){ const g=bump(); const x=el(); setState('fading',{kind:'track',track:sprintTrack}); rampTo(0,0.6,()=>{ if(g!==gen) return; x.pause(); }); } return; }
     if(ev==='sprint'){ if(owner!=='timer'||!sprintSoon||!sprintTrack){ sprintSoon=false; return; } const tr=sprintTrack; sprintTrack=null; sprintSoon=false;
       if(cur===tr&&state==='playing') return; /* already running (resumed early) */
       if(!info.quiet) play('chime',{gain:1}); toast(t`最後 ${info.N} 分鐘`);
       const tail=(tr.dur||0)-(tr.endLoud||((tr.dur||0)-1.0)); const offset=Math.max(0,(tr.dur||0)-info.N*60-tail-0.25);
       if(state==='fading'||state==='playing'){ bump(); hardMute(()=>startTrack(tr,{fadeIn:0.3,why:'timer',offset,deadline:3000})); } else startTrack(tr,{fadeIn:0.3,why:'timer',offset,deadline:3000}); return; }
-    if(ev==='unsprint'){ sprintSoon=false; sprintTrack=null; if(owner!=='timer') return; if(cur&&cur.mood==='sprint'&&state==='playing'){ const tr=pick('think',null); if(tr) switchTo(tr,'timer',0.6,1.0); } else if(state==='fading'&&target&&target.kind==='track'&&target.track&&target.track.mood==='sprint'){ const tr=pick('think',null); if(tr){ bump(); hardMute(()=>startTrack(tr,{fadeIn:1.0,why:'timer'})); } } return; }
+    if(ev==='unsprint'){ sprintSoon=false; sprintTrack=null; if(owner!=='timer') return; if(cur&&cur.mood==='sprint'&&timerMood!=='sprint'&&state==='playing'){ const tr=timerPick(null); if(tr) switchTo(tr,'timer',0.6,1.0); } else if(state==='fading'&&target&&target.kind==='track'&&target.track&&target.track.mood==='sprint'){ const tr=timerPick(null); if(tr){ bump(); hardMute(()=>startTrack(tr,{fadeIn:1.0,why:'timer'})); } } return; }
     if(ev==='last10'){ endF=(owner==='timer'&&state==='playing')?0.4+0.6*clamp(info.rem/10000,0,1):1; return; }
     if(ev==='end'){ sprintSoon=false; sprintTrack=null; if(owner!=='timer') return;
       if(!info.continues||!info.nextMusic){ if(state==='playing'||state==='fading'){ const g=bump(); const x=el(); setState('fading',{kind:'stop'}); rampTo(0,0.15,()=>{ if(g!==gen) return; x.pause(); cur=null; endF=1; setState('idle'); }); } else if(state==='paused'){ stopNow(0); } return; }
-      if(cur&&cur.mood==='sprint'&&state==='playing'){ const tr=pick('think',null); if(tr) switchTo(tr,'timer',0.6,1.0); } endF=1; return; } }
+      if(cur&&cur.mood==='sprint'&&timerMood!=='sprint'&&state==='playing'){ const tr=timerPick(null); if(tr) switchTo(tr,'timer',0.6,1.0); } endF=1; return; } }
   function onLobbyEnd(){ if(owner==='user') return; if(state==='playing'){ fadeTo('stop',2.0,null,()=>{ cur=null; setState('idle'); }); } else if(state==='fading'&&target&&target.kind!=='stop'){ const g=bump(); const x=el(); setState('fading',{kind:'stop'}); rampTo(0,1.0,()=>{ if(g!==gen) return; x.pause(); cur=null; setState('idle'); }); } }
   /* ---------- ducking under sound effects (two levels) ---------- */
   function duck(k,secs){ if(state!=='playing'&&!(state==='fading'&&target&&target.kind==='track')) return; if(pend) return; const n=now(); const chime=k==='chime'||secs<0.7; if(chime&&n<noDuckUntil) return; if(chime&&endF<1) return;
@@ -2880,21 +2899,22 @@ const EV=(function(){
   const musicOK=()=>st.mode==='single'?!(st.useQueue&&queue().length):st.mode==='agenda'?!!(AG()[st.ai]&&AG()[st.ai].music):false;
   const curSecs=()=>{ if(st.mode!=='agenda') return st.secs; const a=AG(); st.ai=clamp(st.ai,0,Math.max(0,a.length-1)); return a.length?a[st.ai].secs:300; };
   let TS={run:false,end:0,rem:curSecs()*1000,total:curSecs()*1000,over:false,warned:false,lastS:null,sprinted:false,sprintPre:false,sprintSoon:false};
-  const startInfo=(first)=>({musicOK:musicOK(),first:!!first,queue:st.mode==='single'&&!!(st.useQueue&&queue().length),sprintArmed:st.sprint>0&&st.mode!=='duel'&&TS.total>=(2*st.sprint+1)*60000}); let autoT=null; const cancelAuto=()=>{ clearTimeout(autoT); autoT=null; };
+  const startInfo=(first)=>({musicOK:musicOK(),first:!!first,queue:st.mode==='single'&&!!(st.useQueue&&queue().length),sprintArmed:st.mMood==='think'&&st.sprint>0&&st.mode!=='duel'&&TS.total>=(2*st.sprint+1)*60000,mood:st.mMood,track:st.mTrack,align:st.align,total:TS.total/1000}); let autoT=null; const cancelAuto=()=>{ clearTimeout(autoT); autoT=null; };
   let D={run:false,active:0,end:0,rem:[st.duelSecs*1000,st.duelSecs*1000],over:[false,false]};
-  const fmt=ms=>{ const s=Math.ceil(Math.abs(ms)/1000); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); };
+  const fmt=ms=>{ const s=(st.ms&&st.mode==='single'&&TS.run&&TS.total<=180000)?Math.floor(Math.abs(ms)/1000):Math.ceil(Math.abs(ms)/1000); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); };
+  const msTxt=ms=>'.'+String(Math.floor(Math.max(0,ms)%1000)).padStart(3,'0');
   const fmtUp=ms=>{ const s=Math.floor(Math.abs(ms)/1000); return '+'+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); };
   function resetS(silent){ cancelAuto(); const sec=curSecs(); TS={run:false,end:0,rem:sec*1000,total:sec*1000,over:false,warned:false,lastS:null,sprinted:false,sprintPre:false,sprintSoon:false}; if(!silent) VIBE.onTimer('reset'); drawS(); }
   function resetD(){ D={run:false,active:0,end:0,rem:[st.duelSecs*1000,st.duelSecs*1000],over:[false,false]}; VIBE.onTimer('reset'); drawD(); }
   function drawS(){ const now=performance.now(); let rem=TS.run?TS.end-now:TS.rem; const wrap=$('#tSingle');
     if(rem<=0&&!TS.over&&TS.run){ TS.over=true; play('gong',{gain:1}); flash(); const continues=st.mode==='agenda'&&st.auto&&st.ai<AG().length-1; VIBE.onTimer('end',{continues,nextMusic:continues&&!!AG()[st.ai+1].music});
       if(continues){ const nxt=AG()[st.ai+1], me=TS; toast(t`接續：${nxt.name}`); cancelAuto(); autoT=setTimeout(()=>{ autoT=null; if(st.mode!=='agenda'||!st.auto||TS!==me||!TS.over||st.ai>=AG().length-1) return; st.ai++; save(); resetS(true); TS.end=performance.now()+TS.rem; TS.run=true; VIBE.onTimer('start',startInfo(false)); drawQ(); },1100); } }
-    if(TS.run&&rem>0&&!TS.over&&st.sprint>0&&st.mode!=='duel'&&TS.total>=(2*st.sprint+1)*60000&&!TS.sprinted){ const N=st.sprint; if(!TS.sprintSoon&&rem<=N*60000+60000){ TS.sprintSoon=true; VIBE.onTimer('sprintSoon'); } if(!TS.sprintPre&&rem<=N*60000+600){ TS.sprintPre=true; VIBE.onTimer('sprintPre',{N}); } if(rem<=N*60000){ TS.sprinted=true; VIBE.onTimer('sprint',{N,rem,quiet:st.warn>=N*60}); } }
+    if(TS.run&&rem>0&&!TS.over&&st.sprint>0&&st.mMood==='think'&&st.mode!=='duel'&&TS.total>=(2*st.sprint+1)*60000&&!TS.sprinted){ const N=st.sprint; if(!TS.sprintSoon&&rem<=N*60000+60000){ TS.sprintSoon=true; VIBE.onTimer('sprintSoon'); } if(!TS.sprintPre&&rem<=N*60000+600){ TS.sprintPre=true; VIBE.onTimer('sprintPre',{N}); } if(rem<=N*60000){ TS.sprinted=true; VIBE.onTimer('sprint',{N,rem,quiet:st.warn>=N*60}); } }
     if(TS.run) VIBE.onTimer('last10',{rem});
     if(TS.run&&!TS.warned&&st.warn>0&&TS.total>st.warn*1000&&rem<=st.warn*1000&&rem>0){ TS.warned=true; play('chime',{gain:1}); toast(t`剩 ${st.warn} 秒`); }
     const sec=Math.ceil(rem/1000); if(TS.run&&rem>0&&sec<=10&&sec!==TS.lastS){ TS.lastS=sec; tick(0.3); }
     wrap.classList.toggle('hot',rem>0&&rem<=10000&&TS.run); wrap.classList.toggle('over',rem<=0&&TS.over);
-    flipNum($('#tTime'),rem>0||!TS.over?fmt(Math.max(0,rem)):fmtUp(rem));
+    flipNum($('#tTime'),rem>0||!TS.over?fmt(Math.max(0,rem)):fmtUp(rem)); const msEl=$('#tMs'); const showMs=st.ms&&st.mode==='single'&&TS.run&&rem>0&&TS.total<=180000; msEl.style.display=showMs?'':'none'; if(showMs) msEl.textContent=msTxt(rem);
     $('#tState').textContent=TS.over?T('時間到（超時中）'):TS.run?T('進行中'):(TS.rem<TS.total?T('暫停中 · 空白鍵繼續'):T('按空白鍵開始'));
     if(st.mode==='agenda'){ const a=AG(); const later=a.slice(st.ai+1).reduce((x,y)=>x+y.secs,0)*1000; const tot=Math.max(0,rem)+later; const html=!a.length?'':(st.ai+1<a.length?t`下一段：${esc(a[st.ai+1].name)+(a[st.ai+1].music?' ♪':'')}（${Math.round(a[st.ai+1].secs/60)} 分）· `:T('最後一段 · '))+t`全部剩餘 ${fmt(tot)}`; const tn=$('#tNext'); if(tn._h!==html){ tn._h=html; tn.innerHTML=html; } }
     $('#tArc').setAttribute('stroke-dashoffset',String(C*(1-clamp(rem/TS.total,0,1)))); }
@@ -2918,9 +2938,19 @@ const EV=(function(){
   function paint(){ paintKeyHint(); const duel=st.mode==='duel', single=st.mode==='single', agenda=st.mode==='agenda'; $('#tSingle').classList.toggle('off',duel); $('#tDuel').classList.toggle('on',duel); $('#tSingleCtl').style.display=single?'':'none'; $('#tDuelCtl').style.display=duel?'':'none'; $('#tAgendaCtl').style.display=agenda?'':'none'; $('#tPresets').style.display=agenda?'none':''; $('#tAgenda').value=st.agenda; $('#tAuto').checked=st.auto; $('#tWarn2').value=st.warn;
     $('#tMin').value=Math.floor(st.secs/60); $('#tSec').value=st.secs%60; $('#tWarn').value=st.warn; $('#tA').value=st.a; $('#tB').value=st.b; $('#tDuelSecs').value=st.duelSecs;
     const sides=$$('.side'); sides[0].style.setProperty('--sc','#e5484d'); sides[1].style.setProperty('--sc','#30a46c'); sides[0].querySelector('.sl').textContent=st.a; sides[1].querySelector('.sl').textContent=st.b;
-    $('#tPresets').innerHTML=[30,60,120,180,300,600].map(s=>`<button class="sm" data-s="${s}">${s<60?s+T(' 秒'):(s/60)+T(' 分')}</button>`).join('');
-    $$('#tPresets button').forEach(b=>b.onclick=()=>{ st.secs=+b.dataset.s; save(); resetS(); paint(); }); $('#tUseQ').checked=st.useQueue; $('#tMusic').checked=st.music; $('#tSprint').value=st.sprint; $('#tSprint').disabled=!st.music; $('#tMusicRow').style.display=duel?'none':''; $('#tSprintRow').style.display=duel?'none':''; drawQ(); drawS(); drawD(); }
-  $('#tMusic').onchange=e=>{ st.music=e.target.checked; $('#tSprint').disabled=!st.music; save(); };
+    $('#tPresets').innerHTML=[40,60,120,180,300,600].map(s=>`<button class="sm" data-s="${s}">${s<60?s+T(' 秒'):(s/60)+T(' 分')}</button>`).join('');
+    $$('#tPresets button').forEach(b=>b.onclick=()=>{ st.secs=+b.dataset.s; save(); resetS(); paint(); }); $('#tUseQ').checked=st.useQueue; $('#tMusic').checked=st.music; $('#tSprint').value=st.sprint; $('#tSprint').disabled=!st.music; $('#tMusicRow').style.display=duel?'none':''; $('#tSprintRow').style.display=(duel||st.mMood!=='think')?'none':'';
+    ['tMoodRow','tTrackRow','tAlignRow'].forEach(id=>$('#'+id).style.display=duel?'none':'');
+    const msel=$('#tMood'); msel.innerHTML=VIBE_MOODS.map(([k,n])=>`<option value="${k}">${T(n)}</option>`).join(''); msel.value=st.mMood; msel.disabled=!st.music;
+    const tsel=$('#tTrack'); const ts=VIBE.status==='ready'?VIBE.tracksOf(st.mMood):[]; const mmss=d=>Math.floor(d/60)+':'+String(Math.round(d%60)).padStart(2,'0');
+    tsel.innerHTML=`<option value="">${VIBE.status==='loading'?T('載入音樂中…'):T('隨機')}</option>`+ts.map(x=>`<option value="${esc(x.id)}">${esc(x.title)}${ts.filter(y=>y.title===x.title).length>1?' · '+(LANG==='en'?'v'+x.version:'第 '+x.version+' 版'):''} · ${mmss(x.dur)}</option>`).join(''); tsel.value=ts.some(x=>x.id===st.mTrack)?st.mTrack:''; tsel.disabled=!st.music;
+    $('#tAlign').checked=st.align; $('#tAlign').disabled=!st.music; $('#tMsOpt').checked=st.ms; drawQ(); drawS(); drawD(); }
+  $('#tMood').onchange=e=>{ st.mMood=e.target.value; st.mTrack=''; save(); paint(); };
+  VIBE.on(()=>{ if(cur==='timer'&&VIBE.status==='ready'&&$('#tTrack').options.length<=1) paint(); });
+  $('#tTrack').onchange=e=>{ st.mTrack=e.target.value; save(); };
+  $('#tAlign').onchange=e=>{ st.align=e.target.checked; save(); };
+  $('#tMsOpt').onchange=e=>{ st.ms=e.target.checked; save(); drawS(); };
+  $('#tMusic').onchange=e=>{ st.music=e.target.checked; save(); paint(); };
   $('#tSprint').onchange=e=>{ st.sprint=clamp(parseInt(e.target.value)||0,0,30); e.target.value=st.sprint; save(); };
   $('#tUseQ').onchange=e=>{ st.useQueue=e.target.checked; save(); drawQ(); }; $('#tNextP').onclick=()=>stepQ(1); $('#tPrevP').onclick=()=>stepQ(-1);
   segBind('#tMode',()=>st.mode,v=>{ if(v===st.mode) return; if(TS.run){ TS.rem=TS.end-performance.now(); TS.run=false; } st.mode=v; resetS(); paint(); });
