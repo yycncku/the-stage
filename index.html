@@ -546,7 +546,7 @@ body.classmode #vbPill{font-size:clamp(12px,1.4vmin,16px);opacity:.65}
           <label class="row"><span class="h">上課模式也顯示 #標籤</span><input type="checkbox" id="gShowTags"></label>
           <label class="row"><span class="h">分組後自動選組長（聚光燈）</span><input type="checkbox" id="gLeader"></label>
           <label class="row"><span class="h">揭曉節奏</span><span class="seg" id="gSpeed"><button data-v="drama">劇場</button><button data-v="fast">快速</button></span></label>
-          <div class="btnrow"><button class="primary" id="gRun">開始分組</button><button class="sm" id="gLeaderBtn" title="快捷鍵 L">選擇組長</button><button class="sm" id="gCopy">複製結果</button><button class="sm" id="gXlsx">匯出 Excel</button><button class="sm ghost" id="gClear">清除</button></div>
+          <div class="btnrow"><button class="primary" id="gRun">開始分組</button><button class="primary" id="gAddIn" style="display:none" title="名單裡還沒分到組的人，依標籤打散補進人數最少的組；原有組員與組長不動">補進現有分組</button><button class="sm" id="gLeaderBtn" title="快捷鍵 L">選擇組長</button><button class="sm" id="gCopy">複製結果</button><button class="sm" id="gXlsx">匯出 Excel</button><button class="sm ghost" id="gClear">清除</button></div>
           <div class="hint">編輯模式下可直接把成員拖到另一組微調。</div>
           <div class="hint" id="gTagHint"></div>
           <div class="hint">分組結果會同步給「點名（組別）」「抽籤」「抽卡」使用。</div>
@@ -1706,6 +1706,8 @@ const EN={
 '每行一段：段落名稱 分鐘。行尾加 ♪ 這段才配樂（例：小組討論 15 ♪）':'One segment per line: name minutes. End a line with ♪ to give it music (e.g. Group discussion 15 ♪)',
 '倒數歸零時響一聲；自動播的音樂淡出，你自己選的照播。0 = 不顯示倒數。':'A chime at zero; auto-played music fades out, music you picked keeps playing. 0 = no countdown.','最後 {} 分鐘':'Last {} minutes','配樂照舊：{}':'Keeping the music: {}','載入失敗':'Could not load','這個情緒的曲子都載不到':'None of this mood’s tracks could be loaded',
 '歌曲與衝刺不在對照表裡，要用時在上方情緒選單自己選。':'Songs and Sprint are not in this table; pick them from the mood menu above.',
+'補進現有分組':'Add newcomers to groups','補進現有分組（{} 人）':'Add {} to the groups','有 {} 人還沒分組':'{} not in a group yet','有人還沒分組：要補人請按 F 回編輯模式；再按一次空白鍵才會全部重新分組':'Someone is not in a group yet: press F for edit mode to add them; press Space again to reshuffle everyone','先分組，才能補人':'Make the groups first, then add people','名單裡沒有未分組的人':'Everyone is already in a group','已把 {} 人補進現有分組':'Added {} to the existing groups',
+'名單裡還沒分到組的人，依標籤打散補進人數最少的組；原有組員與組長不動':'Roster names not yet in a group are spread by tag into the smallest groups; existing members and leaders stay put',
 '情緒':'Mood','播放／暫停':'Play / Pause','下一首（Shift+P）':'Next (Shift+P)','音樂音量':'Music volume','大廳畫面':'Lobby screen','大字':'Headline','小字':'Second line',
 '倒數（分）':'Countdown (min)','開始倒數（Enter）':'Start countdown (Enter)','重設倒數（R）':'Reset countdown (R)',
 '連動':'Automation','切進「氛圍」時自動播放':'Auto-play on entering Vibe','換主題時跟著換情緒':'Follow the theme’s default mood','主題 → 預設情緒':'Theme → default mood',
@@ -2473,7 +2475,8 @@ document.title='The Stage';
   function render(){ const c=cls(), grid=$('#groupGrid'), empty=$('#groupEmpty'); grid.style.gridTemplateColumns=`repeat(${cols(Math.max(1,c.groups.length||G()))},minmax(0,1fr))`;
     const tags=[...new Set(c.names.map(tagOf).filter(Boolean))];
     $('#gTagHint').textContent= tags.length?t`偵測到標籤：${tags.join(T('、'))}`:T('名單中沒有 #標籤；平衡分組需要在名字後加標籤，例如「王小明 #台灣」。');
-    $('#groupSub').textContent = c.names.length ? t`${c.names.length} 人 → ${G()} 組${st.balance&&tags.length?T('，依標籤平衡'):''}${st.avoid&&c.groups.length?T('，避開上次同組'):''}` : '';
+    const un=unassigned(c); const addMode=!!(c.groups.length&&un.length); const btn=$('#gAddIn'); btn.style.display=addMode?'':'none'; btn.textContent=t`補進現有分組（${un.length} 人）`; $('#gRun').classList.toggle('primary',!addMode); /* exactly one primary: the action that is right now */
+    $('#groupSub').textContent = c.names.length ? t`${c.names.length} 人 → ${c.groups.length||G()} 組${st.balance&&tags.length?T('，依標籤平衡'):''}${st.avoid&&c.groups.length?T('，避開上次同組'):''}`+(addMode?' · '+t`有 ${un.length} 人還沒分組`:'') : '';
     if(!c.names.length){ grid.innerHTML=''; empty.style.display='block'; empty.innerHTML=T('先到「名單」貼上學生名字。'); return; }
     empty.style.display=c.groups.length?'none':'block'; empty.innerHTML=T('按 <kbd>空白鍵</kbd> 或右側「開始分組」');
     grid.innerHTML=c.groups.map((g,i)=>card(g,i)).join(''); }
@@ -2496,8 +2499,10 @@ document.title='The Stage';
     flash(); play('chime',{gain:0.9}); await wait(skip?0:700); svg.classList.remove('on'); cards.forEach(cd=>cd.classList.remove('hot')); await wait(200); holes.innerHTML='';
     save(); picking=false; render(); $('#groupSub').textContent=t`${c.names.length} 人 → ${c.groups.length} 組 · 組長已由聚光燈選出`;
   }
+  let armedAt=0;
   async function run(){
     if(running) return; const c=cls(); if(c.names.length<2){ toast(T('名單至少需要 2 人')); return; }
+    if(document.body.classList.contains('classmode')&&c.groups.length&&unassigned(c).length&&performance.now()-armedAt>3000){ armedAt=performance.now(); toast(T('有人還沒分組：要補人請按 F 回編輯模式；再按一次空白鍵才會全部重新分組')); return; }
     if(c.groups.length && !running && document.body.classList.contains('classmode')===false && c.groups.some(g=>g.members.length) && !confirm(T('重新分組會覆蓋目前的分組結果，確定？'))) return;
     ac(); running=true; skip=false; const g=G();
     let best=null, bs=Infinity; const tries=(st.avoid&&c.groups.length)?300:1;
@@ -2522,6 +2527,24 @@ document.title='The Stage';
     const sub=t`${c.names.length} 人 → ${g} 組 · 已完成`; if(!picking){ render(); $('#groupSub').textContent=sub; }
   }
 
+  /* roster names that are in no group yet (newcomers added after the groups were made) */
+  function unassigned(c){ const inG=new Set(); c.groups.forEach(g=>g.members.forEach(n=>inG.add(disp(n)))); return c.names.filter(n=>!inG.has(disp(n))); }
+  /* add newcomers to the existing groups: same tag spread across different groups, each one into the group with the fewest members; nothing else moves */
+  async function addIn(){
+    if(running||picking) return; const c=cls(); if(!c.groups.length){ toast(T('先分組，才能補人')); return; }
+    const names=unassigned(c); if(!names.length){ toast(T('名單裡沒有未分組的人')); return; }
+    const buckets={}; names.forEach(n=>{ (buckets[tagOf(n)||'']=buckets[tagOf(n)||'']||[]).push(n); }); const seq=shuffle(Object.keys(buckets)).flatMap(k=>shuffle(buckets[k]));
+    ac(); running=true; skip=false; render(); const cards=[...$('#groupGrid').children]; const per=st.speed==='fast'?120:420; play('chime',{gain:0.5});
+    const groups=c.groups; /* locked: a 清除 mid-animation must not pull the rug out */
+    const got=groups.map(()=>({})); /* newcomers of each tag each group has received this round: with balance on, spread first, then fill the smallest */
+    try{
+      for(const n of seq){
+        const tg=tagOf(n)||''; const score=i=>(st.balance?(got[i][tg]||0)*1000:0)+groups[i].members.length; const best=Math.min(...groups.map((g,i)=>score(i))); const cands=groups.map((g,i)=>i).filter(i=>score(i)===best); const gi=cands[rint(cands.length)]; got[gi][tg]=(got[gi][tg]||0)+1;
+        groups[gi].members.push(n); const el=cards[gi]; if(el){ cards.forEach(x=>x.classList.toggle('hot',x===el)); el.querySelector('.chips').insertAdjacentHTML('beforeend',chip(n).replace('style="animation:none"','')); el.querySelector('.c').textContent=groups[gi].members.length+T(' 人'); }
+        if(!skip){ tick(0.55); if(el) el.scrollIntoView({block:'nearest',behavior:'smooth'}); await wait(per); } }
+    } finally { running=false; }
+    cards.forEach(x=>x.classList.remove('hot')); save(); render(); celebrate('small',$('#groupGrid')); toast(t`已把 ${seq.length} 人補進現有分組`); }
+  $('#gAddIn').onclick=addIn;
   /* drag a member chip onto another card to move them (edit mode) */
   let drag=null; const grid=$('#groupGrid');
   grid.addEventListener('dragstart',e=>{ const ch=e.target.closest('.chip[draggable]'); if(!ch||running||picking||document.body.classList.contains('classmode')){ e.preventDefault(); if(ch&&document.body.classList.contains('classmode')) toast(T('請切回編輯模式再拖曳調整')); return; } drag={gi:+ch.dataset.gi,mi:+ch.dataset.mi}; ch.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; try{ e.dataTransfer.setData('text/plain','chip'); }catch(x){} });
@@ -2532,7 +2555,7 @@ document.title='The Stage';
     const [n]=from.members.splice(drag.mi,1); if(from.leader===n) from.leader=null; tgt.members.push(n); drag=null; save(); render(); toast(`${disp(n)} → ${tgt.name}`); });
   $('#gXlsx').onclick=()=>exportXLSX();
   $('#gRun').onclick=run; $('#gLeaderBtn').onclick=pickLeaders;
-  $('#gClear').onclick=()=>{ if(!confirm(T('清除目前分組？'))) return; cls().prevGroups=cls().groups; cls().groups=[]; cls().picked.groups=[]; save(); render(); };
+  $('#gClear').onclick=()=>{ if(running||picking) return; if(!confirm(T('清除目前分組？'))) return; cls().prevGroups=cls().groups; cls().groups=[]; cls().picked.groups=[]; save(); render(); };
   $('#gCopy').onclick=()=>copy(cls().groups.map(g=>t`${g.name}（${g.members.length} 人）${g.leader?T('　組長：')+disp(g.leader):''}：${g.members.map(disp).join(T('、'))}`).join('\n'));
   const paintBy=segBind('#gBy',()=>st.by,v=>{ st.by=v; syncN(); render(); });
   segBind('#gSpeed',()=>st.speed,v=>{ st.speed=v; });
