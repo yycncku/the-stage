@@ -2064,8 +2064,9 @@ function normalize(s){
   if(!s.classes.find(c=>c.id===s.current)) s.current=s.classes[0].id;
   return s;
 }
-addEventListener('pagehide',()=>{ try{ localStorage.setItem(LS,JSON.stringify(state)); }catch(e){} });
-let saveT; function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ try{ localStorage.setItem(LS,JSON.stringify(state)); }catch(e){ toast(T('儲存失敗：瀏覽器空間不足或已停用儲存')); } },120); }
+let noSave=false; /* set right before a reload that must NOT be followed by an autosave (import, reset): otherwise pagehide writes the old in-memory state back over what was just written */
+addEventListener('pagehide',()=>{ if(noSave) return; try{ localStorage.setItem(LS,JSON.stringify(state)); }catch(e){} });
+let saveT; function save(){ if(noSave) return; clearTimeout(saveT); saveT=setTimeout(()=>{ if(noSave) return; try{ localStorage.setItem(LS,JSON.stringify(state)); }catch(e){ toast(T('儲存失敗：瀏覽器空間不足或已停用儲存')); } },120); }
 const S=()=>state.settings, MS=id=>state.mod[id];
 const cls=()=>state.classes.find(c=>c.id===state.current);
 const pack=()=>{ const p=S().pack; if(p==='auto') return THEME_PACK[S().theme]||'festival'; if(PACKS[p]) return p; return (SUB_PACKS[p]&&SUB_PACKS[p].base)||'festival'; };
@@ -3096,8 +3097,8 @@ function exportXLSX(){ const c=cls(); const wb=XLSX.utils.book_new(); const add=
 $('#exportXlsx').onclick=exportXLSX;
 $('#exportBtn').onclick=()=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'})); a.download='the-stage-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); };
 $('#importBtn').onclick=()=>$('#importFile').click();
-$('#resetAllBtn').onclick=()=>{ if(!confirm(T('全部還原預設會清掉這個瀏覽器裡的所有班級、分組、卡組與設定（建議先匯出 JSON）。確定？'))) return; try{ localStorage.removeItem(LS); localStorage.removeItem('tars-wheel-v1'); }catch(e){} location.reload(); };
-function importJSON(txt){ try{ const j=JSON.parse(txt); if(!j.classes) throw 0; if(confirm(T('匯入會覆蓋目前所有班級、分組與設定，確定？'))){ localStorage.setItem(LS,JSON.stringify(normalize(j))); location.reload(); } }catch(e){ toast(T('這不是本工具匯出的 JSON')); } }
+$('#resetAllBtn').onclick=()=>{ if(!confirm(T('全部還原預設會清掉這個瀏覽器裡的所有班級、分組、卡組與設定（建議先匯出 JSON）。確定？'))) return; noSave=true; clearTimeout(saveT); try{ localStorage.removeItem(LS); localStorage.removeItem('tars-wheel-v1'); }catch(e){} location.reload(); };
+function importJSON(txt){ try{ const j=JSON.parse(txt); if(!j.classes) throw 0; if(confirm(T('匯入會覆蓋目前所有班級、分組與設定，確定？'))){ noSave=true; clearTimeout(saveT); localStorage.setItem(LS,JSON.stringify(normalize(j))); location.reload(); } }catch(e){ noSave=false; toast(T('這不是本工具匯出的 JSON')); } }
 $('#importFile').onchange=async e=>{ const f=e.target.files[0]; if(f) importJSON(await f.text()); e.target.value=''; };
 
 /* =========================================================
